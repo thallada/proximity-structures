@@ -14,9 +14,9 @@ renderer.resize(window.innerWidth, window.innerHeight);
 
 var counter = 0,
     triPoints = [
-        [100, 100],
-        [50, 150],
-        [150, 150]
+        [0, 0],
+        [-50, 50],
+        [50, 50]
     ],
     triangle = new PIXI.Graphics();
 
