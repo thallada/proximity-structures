@@ -442,7 +442,8 @@ function loopStart () {
 window.onload = loopStart;
 
 window.addEventListener('mousewheel', function (e) {
-    scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
+    // scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
+    // FIXME: buggy :(
 });
 
 // TODO: use jquery PEP to allow user to "pull" at a point elastically
