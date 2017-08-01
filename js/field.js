@@ -33,7 +33,7 @@ var clickMaxDistInc = 5;
 var clickMaxDistMax = 5000;
 var clickPullRate = clickPullRateStart;
 var clickMaxDist = clickMaxDistStart;
-var clickEndRebount = -20;
+var clickEndRebount = -10;
 
 function randomInt (min, max) {
     // inclusive of min and max
@@ -300,6 +300,7 @@ function pullPoints (points, clickPos, pullRate, maxDist) {
         if (Math.abs(xDist) <= maxDist && Math.abs(yDist) <= maxDist) {
             points.target[i][0] += Math.round(xDist * pullRate);
             points.target[i][1] += Math.round(yDist * pullRate);
+            points.target[i][3] = shiftColor(points.original[i][3], disconnectedColorShiftAmt * 3);
         }
     }
 }
@@ -524,17 +525,25 @@ window.addEventListener('mouseup', function (e) {
     clickEnd = true;
 });
 
+window.addEventListener('mouseleave', function (e) {
+    clickEnd = true;
+});
+
 window.addEventListener('touchstart', function (e) {
-    updateClickPos(e);
+    updateClickPos(e.changedTouches[0]);
 });
 
 window.addEventListener('touchmove', function (e) {
     if (click !== null) {
-        updateClickPos(e);
+        updateClickPos(e.changedTouches[0]);
     }
 });
 
-window.addEventListener('touchup', function (e) {
+window.addEventListener('touchend', function (e) {
+    clickEnd = true;
+});
+
+window.addEventListener('touchcancel', function (e) {
     clickEnd = true;
 });
 
