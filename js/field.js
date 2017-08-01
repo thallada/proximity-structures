@@ -21,7 +21,19 @@ var fpsGraphic;
 var scrollDelta;
 var pointShiftBiasX;
 var pointShiftBiasY;
+var resolution = 2;
 var fpsEnabled = false;
+var click = null;
+var clickEnd = false;
+var clickPullRateStart = 0.02;
+var clickMaxDistStart = 100;
+var clickPullRateInc = 0.0005;
+var clickPullRateMax = 0.1;
+var clickMaxDistInc = 5;
+var clickMaxDistMax = 5000;
+var clickPullRate = clickPullRateStart;
+var clickMaxDist = clickMaxDistStart;
+var clickEndRebount = -20;
 
 function randomInt (min, max) {
     // inclusive of min and max
@@ -202,6 +214,15 @@ function shiftColor (color, maxShiftAmt) {
     };
 }
 
+/* from: https://stackoverflow.com/a/17130415 */
+function getMousePos (canvas, evt, res) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: Math.round((evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width / res),
+        y: Math.round((evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height / res)
+    };
+}
+
 function distance (point1, point2) {
     var a = point1[0] - point2[0];
     var b = point1[1] - point2[1];
@@ -271,6 +292,18 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
     return points;
 }
 
+function pullPoints (points, clickPos, pullRate, maxDist) {
+    var xDist, yDist;
+    for (var i = 0; i < points.target.length; i++) {
+        xDist = clickPos.x - points.target[i][0];
+        yDist = clickPos.y - points.target[i][1];
+        if (Math.abs(xDist) <= maxDist && Math.abs(yDist) <= maxDist) {
+            points.target[i][0] += Math.round(xDist * pullRate);
+            points.target[i][1] += Math.round(yDist * pullRate);
+        }
+    }
+}
+
 function redistributeCycles (points) {
     for (var i = 0; i < points.original.length; i++) {
         points.target[i][2] = randomInt(0, cycleDuration - 1);
@@ -336,6 +369,32 @@ function loop () {
 
     polygon.clear();
 
+    if (click !== null) {
+        if (clickEnd) {
+            clickPullRate *= clickEndRebount;
+        }
+        // a pointer event is occuring and needs to affect the points
+        pullPoints(polygonPoints, click, clickPullRate, clickMaxDist);
+
+        // slightly increase effect amount for next loop if click is still occuring
+        if (clickMaxDist <= clickMaxDistMax) {
+            clickMaxDist += clickMaxDistInc;
+        }
+        if (clickPullRate <= clickPullRateMax) {
+            clickPullRate += clickPullRateInc;
+        }
+
+        console.log(clickMaxDist);
+        console.log(clickPullRate);
+
+        if (clickEnd) {
+            click = null;
+            clickEnd = false;
+            clickMaxDist = clickMaxDistStart;
+            clickPullRate = clickPullRateStart;
+        }
+    }
+
     drawPolygon(polygon, polygonPoints, counter, tweeningFns);
 
     counter += 1;
@@ -373,7 +432,7 @@ function loopStart () {
     screenWidth = document.documentElement.clientWidth;
     screenHeight = document.documentElement.clientHeight;
     // Create the renderer
-    renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: 2});
+    renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: resolution});
 
     // Add the canvas to the HTML document
     document.body.appendChild(renderer.view);
@@ -439,6 +498,11 @@ function loopStart () {
     window.requestAnimationFrame(loop);
 }
 
+function updateClickPos (event) {
+    var canvas = document.getElementsByTagName('canvas')[0];
+    click = getMousePos(canvas, event, resolution);
+}
+
 window.onload = loopStart;
 
 window.addEventListener('mousewheel', function (e) {
@@ -446,9 +510,33 @@ window.addEventListener('mousewheel', function (e) {
     // FIXME: buggy :(
 });
 
-// TODO: use jquery PEP to allow user to "pull" at a point elastically
-// window.addEventListener('click', function(e) {
-// });
+window.addEventListener('mousedown', function (e) {
+    updateClickPos(e);
+});
+
+window.addEventListener('mousemove', function (e) {
+    if (click !== null) {
+        updateClickPos(e);
+    }
+});
+
+window.addEventListener('mouseup', function (e) {
+    clickEnd = true;
+});
+
+window.addEventListener('touchstart', function (e) {
+    updateClickPos(e);
+});
+
+window.addEventListener('touchmove', function (e) {
+    if (click !== null) {
+        updateClickPos(e);
+    }
+});
+
+window.addEventListener('touchup', function (e) {
+    clickEnd = true;
+});
 
 window.addEventListener('keydown', function (e) {
     if (e.keyCode === 37) { // left
