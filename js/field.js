@@ -292,7 +292,7 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
     return points;
 }
 
-function pullPoints (points, clickPos, pullRate, maxDist) {
+function pullPoints (points, clickPos, pullRate, maxDist, counter) {
     var xDist, yDist;
     for (var i = 0; i < points.target.length; i++) {
         xDist = clickPos.x - points.target[i][0];
@@ -301,6 +301,11 @@ function pullPoints (points, clickPos, pullRate, maxDist) {
             points.target[i][0] += Math.round(xDist * pullRate);
             points.target[i][1] += Math.round(yDist * pullRate);
             points.target[i][3] = shiftColor(points.original[i][3], disconnectedColorShiftAmt * 3);
+        }
+        // TODO: define these magic numbers somewhere
+        // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
+        if (relativeCounter(points.target[i][2]) > cycleDuration - 10) {
+            points.target[i][2] = (points.target[i][2] + Math.round(cycleDuration / 2)) % cycleDuration;
         }
     }
 }
@@ -375,7 +380,7 @@ function loop () {
             clickPullRate *= clickEndRebount;
         }
         // a pointer event is occuring and needs to affect the points
-        pullPoints(polygonPoints, click, clickPullRate, clickMaxDist);
+        pullPoints(polygonPoints, click, clickPullRate, clickMaxDist, counter);
 
         // slightly increase effect amount for next loop if click is still occuring
         if (clickMaxDist <= clickMaxDistMax) {
