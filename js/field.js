@@ -20,7 +20,9 @@ var renderer,
   fpsGraphic,
   scrollDelta,
   pointShiftBiasX,
-  pointShiftBiasY
+  pointShiftBiasY,
+
+  fpsEnabled = false;
 
 function randomInt (min, max) {
   // inclusive of min and max
@@ -337,7 +339,7 @@ function loop () {
   counter += 1
   counter = counter % cycleDuration
 
-  if (counter === 0) {
+  if (counter === 0 && fpsEnabled) {
     thisLoop = new Date()
     fps = Math.round((1000 / (thisLoop - lastLoop)) * cycleDuration)
     fpsGraphic.setText(fps.toString())
@@ -423,7 +425,10 @@ function loopStart () {
   fpsGraphic = new PIXI.Text('0', {font: '25px monospace', fill: 'yellow'})
   fpsGraphic.x = 0
   fpsGraphic.y = 0
-  stage.addChild(fpsGraphic)
+
+  if (fpsEnabled) {
+    stage.addChild(fpsGraphic)
+  }
 
   lastLoop = new Date()
 
@@ -451,5 +456,15 @@ window.addEventListener('keydown', function (e) {
     pointShiftBiasX = 1
   } else if (e.keyCode === 40) { // down
     pointShiftBiasY = 1
+  } else if (e.keyCode === 70) { // f
+    // toggle fpsCounter
+    if (fpsEnabled) {
+      stage.removeChild(fpsGraphic)
+      fpsEnabled = false;
+    } else {
+      stage.addChild(fpsGraphic)
+      fpsEnabled = true;
+      lastLoop = new Date();
+    }
   }
 })
