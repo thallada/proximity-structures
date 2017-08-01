@@ -1,4 +1,5 @@
 {
+  "extends": "standard",
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
@@ -7,6 +8,7 @@
     }
   },
   "rules": {
-    "semi": "always"
+    "semi": ["error", "always"],
+    "indent": ["error", 4]
   }
 }
