@@ -385,9 +385,6 @@ function loop () {
             clickPullRate += clickPullRateInc;
         }
 
-        console.log(clickMaxDist);
-        console.log(clickPullRate);
-
         if (clickEnd) {
             click = null;
             clickEnd = false;
