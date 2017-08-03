@@ -21,25 +21,76 @@ var fpsGraphic;
 var scrollDelta;
 var pointShiftBiasX;
 var pointShiftBiasY;
-var resolution = 2;
-var fpsEnabled = false;
+var resolution = 1;
+var debug = false;
+var fpsEnabled = debug;
+var allTweeningFns = [
+    linearTweening,
+    easeInSine,
+    easeOutSine,
+    easeInOutSine,
+    easeInQuad,
+    easeOutQuad,
+    easeInOutQuad,
+    easeInCubic,
+    easeOutCubic,
+    easeInOutCubic,
+    easeInExpo,
+    easeOutExpo,
+    easeInOutExpo,
+    easeInCirc,
+    easeOutCirc,
+    easeInOutCirc,
+    easeOutBounce,
+    easeInBounce,
+    easeInOutBounce,
+    easeInElastic,
+    easeOutElastic,
+    easeInOutElastic,
+    easeInBack,
+    easeOutBack,
+    easeInOutBack
+];
+var tweeningSets = {
+    linear: [0],
+    meandering: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    snappy: [10, 11, 12, 13, 14, 15],
+    bouncy: [16, 17, 18],
+    elastic: [19, 20, 21],
+    back: [22, 23, 24]
+};
 var click = null;
+var hover = null;
+var lastHover = null;
 var clickEnd = false;
-var clickPullRateStart = 0.02;
-var clickMaxDistStart = 100;
-var clickPullRateInc = 0.0005;
-var clickPullRateMax = 0.1;
-var clickMaxDistInc = 5;
+var clickPullRateStart = 0.01;
+var clickMaxDistStart = 50;
+var clickPullRateInc = 0.005;
+var clickPullRateMax = 0.3;
+var clickMaxDistInc = 2;
 var clickMaxDistMax = 5000;
 var clickPullRate = clickPullRateStart;
 var clickMaxDist = clickMaxDistStart;
-var clickEndRebount = -10;
+var clickPullRateEnd = -0.6;
+var clickInertiaStart = -0.7;
+var clickInertia = clickInertiaStart;
+var clickInertiaEnd = 0.3;
+var clickTweeningFnStart = null;
+var clickTweeningFn = clickTweeningFnStart;
+var clickTweeningFnEnd = 12;
+var hoverPushRate = -0.05;
+var hoverInertia = 0.8;
+var hoverMaxDistStart = 75;
+var hoverMaxDistMax = 1000;
+var hoverMaxDist = hoverMaxDistStart;
+var hoverTweeningFn = 5;
 
 function randomInt (min, max) {
     // inclusive of min and max
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/* eslint-disable no-unused-vars */
 function linearTweening (t, b, c, d) {
     // t = current time
     // b = start value
@@ -48,7 +99,6 @@ function linearTweening (t, b, c, d) {
     return ((c * t) / d) + b;
 }
 
-/* eslint-disable no-unused-vars */
 function easeOutBounce (t, b, c, d) {
     if ((t /= d) < (1 / 2.75)) {
         return c * (7.5625 * t * t) + b;
@@ -59,6 +109,15 @@ function easeOutBounce (t, b, c, d) {
     } else {
         return c * (7.5625 * (t -= (2.625 / 2.75)) * t + 0.984375) + b;
     }
+}
+
+function easeInBounce (t, b, c, d) {
+    return c - easeOutBounce(d - t, 0, c, d) + b;
+}
+
+function easeInOutBounce (t, b, c, d) {
+    if (t < d / 2) return easeInBounce(t * 2, 0, c, d) * 0.5 + b;
+    return easeOutBounce(t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
 }
 
 function easeInSine (t, b, c, d) {
@@ -134,6 +193,22 @@ function easeInOutElastic (t, b, c, d) {
     if (a < Math.abs(c)) { a = c; s = p / 4; } else s = p / (2 * Math.PI) * Math.asin(c / a);
     if (t < 1) return -0.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
     return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * 0.5 + c + b;
+}
+
+function easeInBack (t, b, c, d, s) {
+    if (s === undefined) s = 1.70158;
+    return c * (t /= d) * t * ((s + 1) * t - s) + b;
+}
+
+function easeOutBack (t, b, c, d, s) {
+    if (s === undefined) s = 1.70158;
+    return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+}
+
+function easeInOutBack (t, b, c, d, s) {
+    if (s === undefined) s = 1.70158;
+    if ((t /= d / 2) < 1) return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
+    return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
 }
 
 function easeInCirc (t, b, c, d) {
@@ -215,12 +290,21 @@ function shiftColor (color, maxShiftAmt) {
 }
 
 /* from: https://stackoverflow.com/a/17130415 */
-function getMousePos (canvas, evt, res) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-        x: Math.round((evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width / res),
-        y: Math.round((evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height / res)
-    };
+function getMousePos (evt, res) {
+    var canvas = document.getElementsByTagName('canvas')[0];
+    if (canvas !== undefined) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+            x: Math.round((evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width / res),
+            y: Math.round((evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height / res)
+        };
+    }
+}
+
+function distancePos (point1, point2) {
+    var a = point1.x - point2.x;
+    var b = point1.y - point2.y;
+    return Math.sqrt(a * a + b * b);
 }
 
 function distance (point1, point2) {
@@ -237,7 +321,7 @@ function getRandomPoints (numPoints, maxX, maxY, tweeningFns) {
         y = randomInt(0, maxY - 1);
         cycleStart = randomInt(0, cycleDuration - 1);
         color = randomColor();
-        easingFn = randomInt(0, tweeningFns.length - 1);
+        easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
         points[i] = [x, y, cycleStart, color, easingFn];
     }
     return points;
@@ -280,7 +364,7 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
             }
             points.target[i][0] = candidateX;
             points.target[i][1] = candidateY;
-            points.target[i][4] = randomInt(0, tweeningFns.length - 1);
+            points.target[i][4] = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
             // FIXME: buggy, makes points jump around too fast
             // points.target[i][2] = shiftPointCounter(points.original[i][2], maxShiftAmt);
         }
@@ -292,15 +376,26 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
     return points;
 }
 
-function pullPoints (points, clickPos, pullRate, maxDist, counter) {
-    var xDist, yDist;
+function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, resetPoints, tweeningFn) {
+    var xDist, yDist, xTraveled, yTraveled;
     for (var i = 0; i < points.target.length; i++) {
         xDist = clickPos.x - points.target[i][0];
         yDist = clickPos.y - points.target[i][1];
+        xTraveled = clickPos.x - points.original[i][0];
+        yTraveled = clickPos.y - points.original[i][1];
         if (Math.abs(xDist) <= maxDist && Math.abs(yDist) <= maxDist) {
-            points.target[i][0] += Math.round(xDist * pullRate);
-            points.target[i][1] += Math.round(yDist * pullRate);
+            if (resetPoints) {
+                // Good for changing directions, reset the points original positions to their current positions
+                points.original[i][0] = points.tweened[i][0];
+                points.original[i][1] = points.tweened[i][1];
+            }
+            points.target[i][0] += Math.round((xDist + (inertia * xTraveled)) * pullRate);
+            points.target[i][1] += Math.round((yDist + (inertia * yTraveled)) * pullRate);
             points.target[i][3] = shiftColor(points.original[i][3], disconnectedColorShiftAmt * 3);
+            if (tweeningFn !== null) {
+                // Also twitch the tweening function for all affected points for additional effect
+                points.target[i][4] = tweeningFn;
+            }
         }
         // TODO: define these magic numbers somewhere
         // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
@@ -310,9 +405,11 @@ function pullPoints (points, clickPos, pullRate, maxDist, counter) {
     }
 }
 
-function redistributeCycles (points) {
+function redistributeCycles (points, oldCycleDuration, cycleDuration) {
+    var progress;
     for (var i = 0; i < points.original.length; i++) {
-        points.target[i][2] = randomInt(0, cycleDuration - 1);
+        progress = points.target[i][2] / oldCycleDuration;
+        points.target[i][2] = Math.round(progress * cycleDuration);
     }
     return points;
 }
@@ -329,7 +426,7 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
     var i, j, easingFn, avgColor, shadedColor, connectionCount, dist, connectivity;
     // calculate vectors
     for (i = 0; i < points.original.length; i++) {
-        easingFn = tweeningFns[points.target[i][4]];
+        easingFn = allTweeningFns[points.target[i][4]];
         points.tweened[i][0] = easingFn(relativeCounter(counter, points.target[i][2]), points.original[i][0], points.target[i][0] - points.original[i][0], cycleDuration);
         points.tweened[i][1] = easingFn(relativeCounter(counter, points.target[i][2]), points.original[i][1], points.target[i][1] - points.original[i][1], cycleDuration);
     }
@@ -377,10 +474,22 @@ function loop () {
 
     if (click !== null) {
         if (clickEnd) {
-            clickPullRate *= clickEndRebount;
+            clickPullRate = clickPullRateEnd;
+            clickInertia = clickInertiaEnd;
+            clickTweeningFn = clickTweeningFnEnd;
+            if (debug) {
+                polygon.lineStyle(1, 0xDC143C, 1);
+                polygon.drawCircle(click.x, click.y, clickMaxDist);
+            }
+        } else {
+            if (debug) {
+                polygon.lineStyle(1, 0x483D8B, 1);
+                polygon.drawCircle(click.x, click.y, clickMaxDist);
+            }
         }
+
         // a pointer event is occuring and needs to affect the points
-        pullPoints(polygonPoints, click, clickPullRate, clickMaxDist, counter);
+        pullPoints(polygonPoints, click, clickPullRate, clickInertia, clickMaxDist, counter, clickEnd, clickTweeningFn);
 
         // slightly increase effect amount for next loop if click is still occuring
         if (clickMaxDist <= clickMaxDistMax) {
@@ -395,10 +504,27 @@ function loop () {
             clickEnd = false;
             clickMaxDist = clickMaxDistStart;
             clickPullRate = clickPullRateStart;
+            clickInertia = clickInertiaStart;
+            clickTweeningFn = clickTweeningFnStart;
         }
+    } else if (hover !== null) {
+        if (lastHover !== null) {
+            hoverMaxDist += Math.min(Math.round(distancePos(hover, lastHover)), hoverMaxDistMax);
+        }
+        if (debug) {
+            polygon.lineStyle(1, 0xBDB76B, 1);
+            polygon.drawCircle(hover.x, hover.y, hoverMaxDist);
+        }
+
+        pullPoints(polygonPoints, hover, hoverPushRate, hoverInertia, hoverMaxDist, counter, false, hoverTweeningFn);
+
+        hoverMaxDist = hoverMaxDistStart;
+        lastHover = hover;
     }
 
+    // polygon.beginFill(0x00FF00);
     drawPolygon(polygon, polygonPoints, counter, tweeningFns);
+    // polygon.endFill();
 
     counter += 1;
     counter = counter % cycleDuration;
@@ -418,12 +544,13 @@ function loop () {
 
     // If user scrolled, modify cycleDuration by amount scrolled
     if (scrollDelta !== 0) {
-        cycleDuration = cycleDuration + scrollDelta;
+        var oldCycleDuration = cycleDuration;
+        cycleDuration = Math.round(cycleDuration + scrollDelta);
         if (cycleDuration < 1) {
             cycleDuration = 1;
         }
         scrollDelta = 0;
-        polygonPoints = redistributeCycles(polygonPoints);
+        polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
     }
 
     // Tell the `renderer` to `render` the `stage`
@@ -456,28 +583,7 @@ function loopStart () {
     // colorShiftAmt = 80;
     disconnectedColorShiftAmt = 10;
     polygon = new window.PIXI.Graphics();
-    tweeningFns = [
-        linearTweening,
-        easeInSine,
-        easeOutSine,
-        easeInOutSine,
-        easeInQuad,
-        easeOutQuad,
-        easeInOutQuad,
-        easeInCubic,
-        easeOutCubic,
-        easeInOutCubic
-        // easeOutBounce,
-        // easeInElastic,
-        // easeOutElastic,
-        // easeInOutElastic,
-        // easeInExpo,
-        // easeOutExpo,
-        // easeInOutExpo,
-        // easeInCirc,
-        // easeOutCirc,
-        // easeInOutCirc
-    ];
+    tweeningFns = tweeningSets.meandering;
     startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, tweeningFns);
     polygonPoints = {
         original: startPoints,
@@ -501,43 +607,22 @@ function loopStart () {
     window.requestAnimationFrame(loop);
 }
 
-function updateClickPos (event) {
-    var canvas = document.getElementsByTagName('canvas')[0];
-    click = getMousePos(canvas, event, resolution);
-}
-
 window.onload = loopStart;
 
+/* MOUSE AND TOUCH EVENTS */
+
+// FIXME: buggy :(
 window.addEventListener('mousewheel', function (e) {
-    // scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
-    // FIXME: buggy :(
-});
-
-window.addEventListener('mousedown', function (e) {
-    updateClickPos(e);
-});
-
-window.addEventListener('mousemove', function (e) {
-    if (click !== null) {
-        updateClickPos(e);
-    }
-});
-
-window.addEventListener('mouseup', function (e) {
-    clickEnd = true;
-});
-
-window.addEventListener('mouseleave', function (e) {
-    clickEnd = true;
+    scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
 });
 
 window.addEventListener('touchstart', function (e) {
-    updateClickPos(e.changedTouches[0]);
+    click = getMousePos(e.changedTouches[0], resolution);
 });
 
 window.addEventListener('touchmove', function (e) {
     if (click !== null) {
-        updateClickPos(e.changedTouches[0]);
+        click = getMousePos(e.changedTouches[0], resolution);
     }
 });
 
@@ -549,6 +634,32 @@ window.addEventListener('touchcancel', function (e) {
     clickEnd = true;
 });
 
+window.addEventListener('mousedown', function (e) {
+    click = getMousePos(e, resolution);
+});
+
+window.addEventListener('mousemove', function (e) {
+    var pos = getMousePos(e, resolution);
+    if (click !== null) {
+        click = pos;
+    }
+    hover = pos;
+});
+
+window.addEventListener('mouseup', function (e) {
+    clickEnd = true;
+    hover = null;
+    lastHover = null;
+});
+
+window.addEventListener('mouseleave', function (e) {
+    clickEnd = true;
+    hover = null;
+    lastHover = null;
+});
+
+/* KEYBOARD EVENTS */
+
 window.addEventListener('keydown', function (e) {
     if (e.keyCode === 37) { // left
         pointShiftBiasX = -1;
@@ -558,6 +669,18 @@ window.addEventListener('keydown', function (e) {
         pointShiftBiasX = 1;
     } else if (e.keyCode === 40) { // down
         pointShiftBiasY = 1;
+    } else if (e.keyCode === 49) { // 1
+        tweeningFns = tweeningSets.linear;
+    } else if (e.keyCode === 50) { // 2
+        tweeningFns = tweeningSets.meandering;
+    } else if (e.keyCode === 51) { // 3
+        tweeningFns = tweeningSets.snappy;
+    } else if (e.keyCode === 52) { // 4
+        tweeningFns = tweeningSets.bouncy;
+    } else if (e.keyCode === 53) { // 5
+        tweeningFns = tweeningSets.elastic;
+    } else if (e.keyCode === 54) { // 6
+        tweeningFns = tweeningSets.back;
     } else if (e.keyCode === 70) { // f
         // toggle fpsCounter
         if (fpsEnabled) {
