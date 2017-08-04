@@ -597,7 +597,7 @@ function loopStart () {
     disconnectedColorShiftAmt = 10;
     polygon = new window.PIXI.Graphics();
     tweeningFns = tweeningSets.meandering;
-    startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, tweeningFns);
+    startPoints = getRandomPoints(3, screenWidth, screenHeight, tweeningFns);
     polygonPoints = {
         original: startPoints,
         target: JSON.parse(JSON.stringify(startPoints)),
@@ -631,6 +631,7 @@ window.addEventListener('mousewheel', function (e) {
 
 window.addEventListener('touchstart', function (e) {
     click = getMousePos(e.changedTouches[0], resolution);
+    clickEnd = false;
 });
 
 window.addEventListener('touchmove', function (e) {
@@ -649,6 +650,7 @@ window.addEventListener('touchcancel', function (e) {
 
 window.addEventListener('mousedown', function (e) {
     click = getMousePos(e, resolution);
+    clickEnd = false;
 });
 
 window.addEventListener('mousemove', function (e) {
