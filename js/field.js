@@ -597,7 +597,7 @@ function loopStart () {
     disconnectedColorShiftAmt = 10;
     polygon = new window.PIXI.Graphics();
     tweeningFns = tweeningSets.meandering;
-    startPoints = getRandomPoints(3, screenWidth, screenHeight, tweeningFns);
+    startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, tweeningFns);
     polygonPoints = {
         original: startPoints,
         target: JSON.parse(JSON.stringify(startPoints)),
