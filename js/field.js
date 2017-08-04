@@ -1,19 +1,19 @@
+/* Sorry, this code is pretty damn ugly. I spend 8 hours 5 days a week refactoring code, I just don't feel like making
+ * it better right now. Maybe I'll have enough caffiene in my veins and nothing better to do sometime to put this all
+ * into ES2015 modules or something.
+ */
+// global vars
 var renderer;
 var stage;
 var screenWidth;
 var screenHeight;
 var counter;
 var totalScreenPixels;
-var cycleDuration;
 var connectionDistance;
-var connectionLimit;
 var pointShiftDistance;
-// var colorShiftAmt;
-var disconnectedColorShiftAmt;
 var polygon;
 var startPoints;
 var polygonPoints;
-var tweeningFns;
 var lastLoop;
 var thisLoop;
 var fps;
@@ -21,10 +21,22 @@ var fpsGraphic;
 var scrollDelta;
 var pointShiftBiasX;
 var pointShiftBiasY;
-var resolution = 1;
-var debug = false;
-var fpsEnabled = debug;
-var allTweeningFns = [
+
+// global non-configurable vars (modifying these might break stuff)
+var click = null;
+var hover = null;
+var lastHover = null;
+var clickEnd = false;
+
+// global configurable vars
+var resolution = 1; // scaling for PIXI renderer
+var debug = false; // toggles drawing extra indicators for debugging
+var fpsEnabled = debug; // toggles the FPS counter
+var cycleDuration = 60; // length of a point's "cycle": number of frames it takes for it to travel to its chosen destination
+var connectionLimit = 10; // maximum number of lines drawn from one point to others within connection distance
+// colorShiftAmt = 80; // disabled for now
+var disconnectedColorShiftAmt = 10; // when a point is alone (not connected), shift RGB values by this amount every tick
+var allTweeningFns = [ // array of all possible tweening functions, these are defined below
     linearTweening,
     easeInSine,
     easeOutSine,
@@ -51,7 +63,8 @@ var allTweeningFns = [
     easeOutBack,
     easeInOutBack
 ];
-var tweeningSets = {
+// sets of tweening functions that I think look good with points randomly choose from them
+var tweeningSets = { // numbers refer to indicies into the allTweeningsFns array above
     linear: [0],
     meandering: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     snappy: [10, 11, 12, 13, 14, 15],
@@ -59,36 +72,37 @@ var tweeningSets = {
     elastic: [19, 20, 21],
     back: [22, 23, 24]
 };
-var click = null;
-var hover = null;
-var lastHover = null;
-var clickEnd = false;
-var clickPullRateStart = 0.01;
-var clickMaxDistStart = 50;
-var clickPullRateInc = 0.005;
-var clickPullRateMax = 0.3;
-var clickMaxDistInc = 2;
-var clickMaxDistMax = 5000;
+var tweeningFns = tweeningSets.meandering; // the actual set of tweening functions points will randomly choose from
+// click effect related config vars
+var clickPullRateStart = 0.01; // initial value for the ratio of a point's distance from the click position to travel in one cycle
+var clickPullRateInc = 0.005; // amount to increase clickPullRate every tick that a click is held
+var clickPullRateMax = 0.5; // maximum value of clickPullRate
 var clickPullRate = clickPullRateStart;
+var clickMaxDistStart = 50; // initial value for the effect radius of a click: points this distance from click position will be pulled
+var clickMaxDistInc = 2; // amount to increase clickMaxDist every tick that a click is held
+var clickMaxDistMax = 5000; // maximum value of clickMaxDist
 var clickMaxDist = clickMaxDistStart;
-var clickPullRateEnd = -0.6;
-var clickInertiaStart = -0.7;
+var clickInertiaStart = -0.7; // initial value of the ratio of point's origin distance from the click position to be added to point's new target
 var clickInertia = clickInertiaStart;
-var clickInertiaEnd = 0.3;
-var clickTweeningFnStart = null;
+var clickTweeningFnStart = null; // initial value of the specific tweening function to assign to points in effect radius (null will not change functions)
 var clickTweeningFn = clickTweeningFnStart;
-var clickTweeningFnEnd = 12;
-var hoverPushRate = -0.05;
-var hoverInertia = 0.8;
-var hoverMaxDistStart = 75;
-var hoverMaxDistMax = 1000;
+var clickColorShiftAmt = disconnectedColorShiftAmt * 3; // amount of RGB color value to shift for each point in effect radius
+var clickPullRateEnd = -0.6; // value of clickPullRate during tick after end of click (for "rebound" effect)
+var clickInertiaEnd = 0.3; // value of clickInertia during tick after end of click
+var clickTweeningFnEnd = 12; // value of clickTweeningFn during tick after end of click (number refers to index into allTweeningsFns)
+// hover effect related config vars
+var hoverPushRate = -0.05; // ratio of a point's distance from the hover position to travel in one cycle
+var hoverInertia = 0.8;  // ratio of a point's origin distance from the click position to be added to point's new target
+var hoverMaxDistStart = 75; // initial value for the effect radius of a hover: points this distance from hover position will be pushed
+var hoverMaxDistMax = 1000; // maximum value of hoverMaxDist
 var hoverMaxDist = hoverMaxDistStart;
-var hoverTweeningFn = 5;
+var hoverTweeningFn = 5;  // specific tweening function to assign to points in effect radius
 
-function randomInt (min, max) {
-    // inclusive of min and max
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+/* TWEENING FUNCTIONS */
+
+// These are modified versions of the jquery easing functions:
+// https://github.com/danro/jquery-easing/blob/master/jquery.easing.js
+// See license in LICENSE-3RD-PARTY.txt
 
 /* eslint-disable no-unused-vars */
 function linearTweening (t, b, c, d) {
@@ -225,6 +239,13 @@ function easeInOutCirc (t, b, c, d) {
 }
 /* eslint-enable no-unused-vars */
 
+/* UTILITY FUNCTIONS */
+
+function randomInt (min, max) {
+    // inclusive of min and max
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 // from: http://stackoverflow.com/a/5624139
 // modified to return integer literal
 function rgbToHex (color) {
@@ -301,17 +322,39 @@ function getMousePos (evt, res) {
     }
 }
 
-function distancePos (point1, point2) {
-    var a = point1.x - point2.x;
-    var b = point1.y - point2.y;
-    return Math.sqrt(a * a + b * b);
-}
-
 function distance (point1, point2) {
     var a = point1[0] - point2[0];
     var b = point1[1] - point2[1];
     return Math.sqrt(a * a + b * b);
 }
+
+function distancePos (point1, point2) {
+    // TODO: refactor distance and distancePos to the same function
+    var a = point1.x - point2.x;
+    var b = point1.y - point2.y;
+    return Math.sqrt(a * a + b * b);
+}
+
+// eslint-disable-next-line no-unused-vars
+function shiftPointCounter (original, maxShiftAmt) {
+    var shiftAmt = randomInt(maxShiftAmt * -1, 0);
+    var newCounter = original + shiftAmt;
+    if (newCounter < 0) {
+        newCounter = cycleDuration + shiftAmt;
+    }
+    return newCounter;
+}
+
+function relativeCounter (counter, targetStart) {
+    /* Return current progress of point in its cycle. AKA. what count would be if cycleDuration == targetStart */
+    var relCounter = counter - targetStart;
+    if (relCounter < 0) {
+        return cycleDuration + relCounter;
+    }
+    return relCounter;
+}
+
+/* POINT OPERATION FUNCTIONS */
 
 function getRandomPoints (numPoints, maxX, maxY, tweeningFns) {
     var i, x, y, color, cycleStart, easingFn;
@@ -325,16 +368,6 @@ function getRandomPoints (numPoints, maxX, maxY, tweeningFns) {
         points[i] = [x, y, cycleStart, color, easingFn];
     }
     return points;
-}
-
-// eslint-disable-next-line no-unused-vars
-function shiftPointCounter (original, maxShiftAmt) {
-    var shiftAmt = randomInt(maxShiftAmt * -1, 0);
-    var newCounter = original + shiftAmt;
-    if (newCounter < 0) {
-        newCounter = cycleDuration + shiftAmt;
-    }
-    return newCounter;
 }
 
 function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
@@ -377,35 +410,42 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
 }
 
 function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, resetPoints, tweeningFn) {
-    var xDist, yDist, xTraveled, yTraveled;
+    var targetXDiff, targetYDiff, originXDiff, originYDiff;
     for (var i = 0; i < points.target.length; i++) {
-        xDist = clickPos.x - points.target[i][0];
-        yDist = clickPos.y - points.target[i][1];
-        xTraveled = clickPos.x - points.original[i][0];
-        yTraveled = clickPos.y - points.original[i][1];
-        if (Math.abs(xDist) <= maxDist && Math.abs(yDist) <= maxDist) {
+        targetXDiff = clickPos.x - points.target[i][0];
+        targetYDiff = clickPos.y - points.target[i][1];
+        originXDiff = clickPos.x - points.original[i][0];
+        originYDiff = clickPos.y - points.original[i][1];
+        if (Math.abs(targetXDiff) <= maxDist && Math.abs(targetYDiff) <= maxDist) { // point is within effect radius
             if (resetPoints) {
                 // Good for changing directions, reset the points original positions to their current positions
                 points.original[i][0] = points.tweened[i][0];
                 points.original[i][1] = points.tweened[i][1];
             }
-            points.target[i][0] += Math.round((xDist + (inertia * xTraveled)) * pullRate);
-            points.target[i][1] += Math.round((yDist + (inertia * yTraveled)) * pullRate);
-            points.target[i][3] = shiftColor(points.original[i][3], disconnectedColorShiftAmt * 3);
+            points.target[i][0] += Math.round((targetXDiff + (inertia * originXDiff)) * pullRate); // pull X
+            points.target[i][1] += Math.round((targetYDiff + (inertia * originYDiff)) * pullRate); // pull Y
+            // shift the color of each point in effect radius by some configurable amount
+            points.target[i][3] = shiftColor(points.original[i][3], clickColorShiftAmt);
             if (tweeningFn !== null) {
-                // Also twitch the tweening function for all affected points for additional effect
+                // Also switch the tweening function for all affected points for additional effect
+                // The tweening function will be re-assigned at the start of the point's next cycle
                 points.target[i][4] = tweeningFn;
             }
         }
-        // TODO: define these magic numbers somewhere
         // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
-        if (relativeCounter(points.target[i][2]) > cycleDuration - 10) {
+        if (relativeCounter(points.target[i][2]) > Math.roundcycleDuration - 10) {
             points.target[i][2] = (points.target[i][2] + Math.round(cycleDuration / 2)) % cycleDuration;
         }
     }
 }
 
 function redistributeCycles (points, oldCycleDuration, cycleDuration) {
+    /* Given old and new cycleDuration, re-assign points' cycle starts that expand/compress to fit the new range in a
+     * way that ensures the current progress of the point in its cycle is around the same percentage (so that the point
+     * does not jump erratically back or forward in it's current trajectory).
+     */
+    // FIXME: if cycleDuration goes to 1 all points' cycles will be compressed to about the same value, and when
+    // cycleDuration goes back up, the values will remain the same, making the points appear to dance in sync.
     var progress;
     for (var i = 0; i < points.original.length; i++) {
         progress = points.target[i][2] / oldCycleDuration;
@@ -414,13 +454,7 @@ function redistributeCycles (points, oldCycleDuration, cycleDuration) {
     return points;
 }
 
-function relativeCounter (counter, targetStart) {
-    var relCounter = counter - targetStart;
-    if (relCounter < 0) {
-        return cycleDuration + relCounter;
-    }
-    return relCounter;
-}
+/* DRAW FUNCTIONS */
 
 function drawPolygon (polygon, points, counter, tweeningFns) {
     var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity;
@@ -478,6 +512,8 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
     }
 }
 
+/* MAIN LOOP */
+
 function loop () {
     screenWidth = document.documentElement.clientWidth;
     screenHeight = document.documentElement.clientHeight;
@@ -487,21 +523,24 @@ function loop () {
 
     if (click !== null) {
         if (clickEnd) {
+            // apply "rebound" effects
             clickPullRate = clickPullRateEnd;
             clickInertia = clickInertiaEnd;
             clickTweeningFn = clickTweeningFnEnd;
             if (debug) {
+                // draw debug click effect radius red color when clickEnd == true
                 polygon.lineStyle(1, 0xDC143C, 1);
                 polygon.drawCircle(click.x, click.y, clickMaxDist);
             }
         } else {
             if (debug) {
+                // draw click effect radius blue when debug is on
                 polygon.lineStyle(1, 0x483D8B, 1);
                 polygon.drawCircle(click.x, click.y, clickMaxDist);
             }
         }
 
-        // a pointer event is occuring and needs to affect the points
+        // a pointer event is occuring and needs to affect the points in effect radius
         pullPoints(polygonPoints, click, clickPullRate, clickInertia, clickMaxDist, counter, clickEnd, clickTweeningFn);
 
         // slightly increase effect amount for next loop if click is still occuring
@@ -513,6 +552,7 @@ function loop () {
         }
 
         if (clickEnd) {
+            // done with rebound effect, re-initialize everything to prepare for next click
             click = null;
             clickEnd = false;
             clickMaxDist = clickMaxDistStart;
@@ -522,19 +562,23 @@ function loop () {
         }
     } else if (hover !== null) {
         if (lastHover !== null) {
+            // hover effect radius grows bigger the faster the mouse moves
             hoverMaxDist += Math.min(Math.round(distancePos(hover, lastHover)), hoverMaxDistMax);
         }
         if (debug) {
+            // draw hover effect radius yellow when debug is on
             polygon.lineStyle(1, 0xBDB76B, 1);
             polygon.drawCircle(hover.x, hover.y, hoverMaxDist);
         }
 
+        // a hover event is occuring and needs to affect the points in effect radius
         pullPoints(polygonPoints, hover, hoverPushRate, hoverInertia, hoverMaxDist, counter, false, hoverTweeningFn);
 
         hoverMaxDist = hoverMaxDistStart;
         lastHover = hover;
     }
 
+    // TODO: it would be cool to fill in triangles
     // polygon.beginFill(0x00FF00);
     drawPolygon(polygon, polygonPoints, counter, tweeningFns);
     // polygon.endFill();
@@ -549,11 +593,8 @@ function loop () {
         lastLoop = thisLoop;
     }
 
+    // points that have reached the end of their cycles need new targets
     polygonPoints = shiftPoints(polygonPoints, pointShiftDistance, counter, tweeningFns);
-
-    // var mousePosition = renderer.plugins.interaction.mouse.global;
-    // triangle.x = mousePosition.x;
-    // triangle.y = mousePosition.y;
 
     // If user scrolled, modify cycleDuration by amount scrolled
     if (scrollDelta !== 0) {
@@ -589,14 +630,9 @@ function loopStart () {
 
     counter = 0;
     totalScreenPixels = screenWidth + screenHeight;
-    cycleDuration = 60;
     connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
-    connectionLimit = 10;
     pointShiftDistance = Math.round(totalScreenPixels / 45);
-    // colorShiftAmt = 80;
-    disconnectedColorShiftAmt = 10;
     polygon = new window.PIXI.Graphics();
-    tweeningFns = tweeningSets.meandering;
     startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, tweeningFns);
     polygonPoints = {
         original: startPoints,
@@ -712,7 +748,7 @@ window.addEventListener('keydown', function (e) {
             fpsEnabled = true;
             lastLoop = new Date();
         }
-    } else if (e.keyCode === 68) {
+    } else if (e.keyCode === 68) { // d
         // toggle debug
         if (debug) {
             if (fpsEnabled) {
