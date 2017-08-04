@@ -87,7 +87,7 @@ var clickInertia = clickInertiaStart;
 var clickTweeningFnStart = null; // initial value of the specific tweening function to assign to points in effect radius (null will not change functions)
 var clickTweeningFn = clickTweeningFnStart;
 var clickColorShiftAmt = disconnectedColorShiftAmt * 3; // amount of RGB color value to shift for each point in effect radius
-var clickPullRateEnd = -0.6; // value of clickPullRate during tick after end of click (for "rebound" effect)
+var clickPullRateEnd = -0.5; // value of clickPullRate during tick after end of click (for "rebound" effect)
 var clickInertiaEnd = 0.3; // value of clickInertia during tick after end of click
 var clickTweeningFnEnd = 12; // value of clickTweeningFn during tick after end of click (number refers to index into allTweeningsFns)
 // hover effect related config vars
