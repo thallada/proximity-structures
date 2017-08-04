@@ -423,12 +423,25 @@ function relativeCounter (counter, targetStart) {
 }
 
 function drawPolygon (polygon, points, counter, tweeningFns) {
-    var i, j, easingFn, avgColor, shadedColor, connectionCount, dist, connectivity;
+    var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity;
     // calculate vectors
     for (i = 0; i < points.original.length; i++) {
         easingFn = allTweeningFns[points.target[i][4]];
-        points.tweened[i][0] = easingFn(relativeCounter(counter, points.target[i][2]), points.original[i][0], points.target[i][0] - points.original[i][0], cycleDuration);
-        points.tweened[i][1] = easingFn(relativeCounter(counter, points.target[i][2]), points.original[i][1], points.target[i][1] - points.original[i][1], cycleDuration);
+        relativeCount = relativeCounter(counter, points.target[i][2]);
+        points.tweened[i][0] = easingFn(relativeCount, points.original[i][0], points.target[i][0] - points.original[i][0], cycleDuration);
+        points.tweened[i][1] = easingFn(relativeCount, points.original[i][1], points.target[i][1] - points.original[i][1], cycleDuration);
+
+        if (debug) {
+            // draw vector trajectories
+            polygon.lineStyle(1, 0x191970, 1);
+            polygon.moveTo(points.tweened[i][0], points.tweened[i][1]);
+            for (j = relativeCount; j < cycleDuration; j++) {
+                polygon.lineTo(
+                    easingFn(j, points.original[i][0], points.target[i][0] - points.original[i][0], cycleDuration),
+                    easingFn(j, points.original[i][1], points.target[i][1] - points.original[i][1], cycleDuration)
+                );
+            }
+        }
     }
     // draw lines
     for (i = 0; i < points.original.length; i++) {
@@ -658,6 +671,12 @@ window.addEventListener('mouseleave', function (e) {
     lastHover = null;
 });
 
+document.addEventListener('mouseleave', function (e) {
+    clickEnd = true;
+    hover = null;
+    lastHover = null;
+});
+
 /* KEYBOARD EVENTS */
 
 window.addEventListener('keydown', function (e) {
@@ -689,6 +708,22 @@ window.addEventListener('keydown', function (e) {
         } else {
             stage.addChild(fpsGraphic);
             fpsEnabled = true;
+            lastLoop = new Date();
+        }
+    } else if (e.keyCode === 68) {
+        // toggle debug
+        if (debug) {
+            if (fpsEnabled) {
+                stage.removeChild(fpsGraphic);
+            }
+            debug = false;
+            fpsEnabled = debug;
+        } else {
+            if (!fpsEnabled) {
+                stage.addChild(fpsGraphic);
+            }
+            debug = true;
+            fpsEnabled = debug;
             lastLoop = new Date();
         }
     }
