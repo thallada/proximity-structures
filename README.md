@@ -15,8 +15,8 @@ point's color becomes an average of all of its connected points' colors.
 ### Interaction
 
 Your mouse on the canvas will repel points away, but clicking and holding will
-attract points towards your mouse until you let go, which will explode the
-points outwards in all directions.
+attract points towards your mouse until you let go, which will cause the points
+to explode outwards in all directions.
 
 Scrolling your mouse will speed up or slow down time.
 
@@ -28,7 +28,7 @@ Scrolling your mouse will speed up or slow down time.
 | right | hold to restrict points to the right of the screen  |
 | up    | hold to restrict points to the top of the screen    |
 | down  | hold to restrict points to the bottom of the screen |
-| 1     | makes points move uniformly gradual                 |
+| 1     | makes points move linearly                          |
 | 2     | makes points meander                                |
 | 3     | makes points snappy                                 |
 | 4     | makes points bouncy                                 |
