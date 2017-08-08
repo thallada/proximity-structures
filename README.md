@@ -5,7 +5,8 @@ A procedurally generated and interactive animation created with
 
 Play with it here: [http://proximity.hallada.net](http://proximity.hallada.net)
 
-![GIF of the animation in action](/img/proximity-structures.gif)
+[![GIF of the animation in
+action](/img/proximity-structures.gif)](http://proximity.hallada.net)
 
 A number of points are placed randomly on a canvas. They move in random
 directions with their own movement behavior. Each is assigned a random color. If
