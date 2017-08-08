@@ -9,3 +9,6 @@ If lines make a connected polygon, shade the inside of it with the average color
 of all vertices composing the polygon. The more distant the points (and the
 larger the polygon) the more dark the color is shaded.
   * Hard. Not sure where to start with this.
+
+Add a bunch of dials and switches to the UI to tweak the different configurable
+values.

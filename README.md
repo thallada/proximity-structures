@@ -36,3 +36,10 @@ Scrolling your mouse will speed up or slow down time.
 | 6     | makes points overshoot                              |
 | f     | enables FPS counter                                 |
 | d     | enables debug mode (including FPS counter)          |
+
+### Tweaking
+
+There are many more configurable values that affect the animation which don't
+have an interaction or keybinding. You can find all of these at the top of
+[`proximity.js`](/js/proximity.js). If you are feeling experimental, you can
+clone the repo and edit those yourself.
