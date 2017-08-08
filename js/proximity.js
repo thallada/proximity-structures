@@ -660,7 +660,6 @@ window.onload = loopStart;
 
 /* MOUSE AND TOUCH EVENTS */
 
-// FIXME: buggy :(
 window.addEventListener('mousewheel', function (e) {
     scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
 });
