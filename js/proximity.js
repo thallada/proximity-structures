@@ -445,10 +445,18 @@ function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, rese
                 // The tweening function will be re-assigned at the start of the point's next cycle
                 points.target[i][4] = tweeningFn;
             }
-        }
-        // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
-        if (relativeCounter(points.target[i][3]) > Math.roundcycleDuration - 10) {
-            points.target[i][3] = (points.target[i][3] + Math.round(cycleDuration / 2)) % cycleDuration;
+            if (debug) {
+                points.target[i][6] = true;  // marks this point as affected
+            }
+
+            // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
+            if (relativeCounter(points.target[i][3]) > Math.roundcycleDuration - 10) {
+                points.target[i][3] = (points.target[i][3] + Math.round(cycleDuration / 2)) % cycleDuration;
+            }
+        } else {
+            if (debug) {
+                points.target[i][6] = false;  // marks this point as unaffected
+            }
         }
     }
 }
@@ -481,7 +489,11 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
 
         if (debug) {
             // draw vector trajectories
-            polygon.lineStyle(1, 0x191970, 1);
+            if (points.target[i][6]) {
+                polygon.lineStyle(1, 0x008b8b, 1);  // draw path different color if it is under effect of click/hover
+            } else {
+                polygon.lineStyle(1, 0x191970, 1);
+            }
             polygon.moveTo(points.tweened[i][0], points.tweened[i][1]);
             for (j = relativeCount; j < cycleDuration; j++) {
                 polygon.lineTo(
