@@ -27,6 +27,7 @@ var click = null;
 var hover = null;
 var lastHover = null;
 var clickEnd = false;
+var sprites = [];
 
 // global configurable vars
 var resolution = 1; // scaling for PIXI renderer
@@ -97,6 +98,8 @@ var hoverMaxDistStart = 75; // initial value for the effect radius of a hover: p
 var hoverMaxDistMax = 1000; // maximum value of hoverMaxDist
 var hoverMaxDist = hoverMaxDistStart;
 var hoverTweeningFn = 5;  // specific tweening function to assign to points in effect radius
+var zRange = 10;  // maximum value for the range of possible z values for a point (unused right now)
+var nodeImg = 'img/node.png';  // image file location for representing every point
 
 /* TWEENING FUNCTIONS */
 
@@ -354,18 +357,29 @@ function relativeCounter (counter, targetStart) {
     return relCounter;
 }
 
+function createSprite () {
+    return new window.PIXI.Sprite(
+        window.PIXI.loader.resources[nodeImg].texture
+    );
+}
+
 /* POINT OPERATION FUNCTIONS */
 
-function getRandomPoints (numPoints, maxX, maxY, tweeningFns) {
-    var i, x, y, color, cycleStart, easingFn;
+function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
+    var i, x, y, z, color, cycleStart, easingFn, sprite;
     var points = [];
     for (i = 0; i < numPoints; i++) {
         x = randomInt(0, maxX - 1);
         y = randomInt(0, maxY - 1);
+        z = randomInt(0, maxZ - 1);  // TODO: do something with the 3rd dimension
         cycleStart = randomInt(0, cycleDuration - 1);
         color = randomColor();
         easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
-        points[i] = [x, y, cycleStart, color, easingFn];
+        // save PIXI Sprite for each point in array
+        sprite = createSprite();
+        sprites.push(sprite);
+        stage.addChild(sprite);
+        points[i] = [x, y, z, cycleStart, color, easingFn];
     }
     return points;
 }
@@ -373,11 +387,11 @@ function getRandomPoints (numPoints, maxX, maxY, tweeningFns) {
 function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
     var i, shiftX, shiftY, candidateX, candidateY;
     for (i = 0; i < points.original.length; i++) {
-        if (points.target[i][2] >= cycleDuration) {
+        if (points.target[i][3] >= cycleDuration) {
             // cycleDuration was reduced and now this point's cycle is out of bounds. Randomly pick a new valid one.
-            points.target[i][2] = randomInt(0, cycleDuration - 1);
+            points.target[i][3] = randomInt(0, cycleDuration - 1);
         }
-        if (points.target[i][2] === counter) {
+        if (points.target[i][3] === counter) {
             points.original[i] = points.target[i].slice();
             shiftX = randomInt(maxShiftAmt * -1, maxShiftAmt);
             shiftY = randomInt(maxShiftAmt * -1, maxShiftAmt);
@@ -397,9 +411,9 @@ function shiftPoints (points, maxShiftAmt, counter, tweeningFns) {
             }
             points.target[i][0] = candidateX;
             points.target[i][1] = candidateY;
-            points.target[i][4] = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
+            points.target[i][5] = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
             // FIXME: buggy, makes points jump around too fast
-            // points.target[i][2] = shiftPointCounter(points.original[i][2], maxShiftAmt);
+            // points.target[i][3] = shiftPointCounter(points.original[i][3], maxShiftAmt);
         }
     }
     // clear pointShiftBiases now that they have been "used"
@@ -425,7 +439,7 @@ function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, rese
             points.target[i][0] += Math.round((targetXDiff + (inertia * originXDiff)) * pullRate); // pull X
             points.target[i][1] += Math.round((targetYDiff + (inertia * originYDiff)) * pullRate); // pull Y
             // shift the color of each point in effect radius by some configurable amount
-            points.target[i][3] = shiftColor(points.original[i][3], clickColorShiftAmt);
+            points.target[i][4] = shiftColor(points.original[i][4], clickColorShiftAmt);
             if (tweeningFn !== null) {
                 // Also switch the tweening function for all affected points for additional effect
                 // The tweening function will be re-assigned at the start of the point's next cycle
@@ -433,8 +447,8 @@ function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, rese
             }
         }
         // If this point's cycle is near it's end, bump it up some ticks to make the animation smoother
-        if (relativeCounter(points.target[i][2]) > Math.roundcycleDuration - 10) {
-            points.target[i][2] = (points.target[i][2] + Math.round(cycleDuration / 2)) % cycleDuration;
+        if (relativeCounter(points.target[i][3]) > Math.roundcycleDuration - 10) {
+            points.target[i][3] = (points.target[i][3] + Math.round(cycleDuration / 2)) % cycleDuration;
         }
     }
 }
@@ -448,8 +462,8 @@ function redistributeCycles (points, oldCycleDuration, cycleDuration) {
     // cycleDuration goes back up, the values will remain the same, making the points appear to dance in sync.
     var progress;
     for (var i = 0; i < points.original.length; i++) {
-        progress = points.target[i][2] / oldCycleDuration;
-        points.target[i][2] = Math.round(progress * cycleDuration);
+        progress = points.target[i][3] / oldCycleDuration;
+        points.target[i][3] = Math.round(progress * cycleDuration);
     }
     return points;
 }
@@ -457,11 +471,11 @@ function redistributeCycles (points, oldCycleDuration, cycleDuration) {
 /* DRAW FUNCTIONS */
 
 function drawPolygon (polygon, points, counter, tweeningFns) {
-    var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity;
+    var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity, scale;
     // calculate vectors
     for (i = 0; i < points.original.length; i++) {
-        easingFn = allTweeningFns[points.target[i][4]];
-        relativeCount = relativeCounter(counter, points.target[i][2]);
+        easingFn = allTweeningFns[points.target[i][5]];
+        relativeCount = relativeCounter(counter, points.target[i][3]);
         points.tweened[i][0] = easingFn(relativeCount, points.original[i][0], points.target[i][0] - points.original[i][0], cycleDuration);
         points.tweened[i][1] = easingFn(relativeCount, points.original[i][1], points.target[i][1] - points.original[i][1], cycleDuration);
 
@@ -487,12 +501,12 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
             connectivity = dist / connectionDistance;
             if ((j !== i) && (dist <= connectionDistance)) {
                 // find average color of both points
-                if ((points.tweened[i][2] === counter) || (points.tweened[j][2] === counter)) {
+                if ((points.tweened[i][3] === counter) || (points.tweened[j][3] === counter)) {
                     // avgColor = shiftColor(avgColor, Math.round(colorShiftAmt * (1 - connectivity)));
-                    points.tweened[i][3] = weightedAverageColor(points.tweened[i][3], points.tweened[j][3], connectivity);
-                    points.tweened[j][3] = weightedAverageColor(points.tweened[j][3], points.tweened[i][3], connectivity);
+                    points.tweened[i][4] = weightedAverageColor(points.tweened[i][4], points.tweened[j][4], connectivity);
+                    points.tweened[j][4] = weightedAverageColor(points.tweened[j][4], points.tweened[i][4], connectivity);
                 }
-                avgColor = averageColor(points.tweened[i][3], points.tweened[j][3]);
+                avgColor = averageColor(points.tweened[i][4], points.tweened[j][4]);
                 shadedColor = shadeColor(avgColor, connectivity);
                 polygon.lineStyle(1, rgbToHex(shadedColor), 1);
 
@@ -503,12 +517,18 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
         }
 
         if (connectionCount === 0) {
-            points.tweened[i][3] = shiftColor(points.tweened[i][3], disconnectedColorShiftAmt);
+            points.tweened[i][4] = shiftColor(points.tweened[i][4], disconnectedColorShiftAmt);
         }
 
         // draw vectors
-        polygon.lineStyle(1, rgbToHex(points.tweened[i][3]), 1);
-        polygon.drawCircle(points.tweened[i][0], points.tweened[i][1], 1);
+        polygon.lineStyle(1, rgbToHex(points.tweened[i][4]), 1);
+        // TODO: numbers here should be derived from a configuration variable
+        scale = 0.03;
+        sprites[i].scale.x = scale;
+        sprites[i].scale.y = scale;
+        sprites[i].x = points.tweened[i][0] - 1.5;
+        sprites[i].y = points.tweened[i][1] - 1.5;
+        sprites[i].tint = rgbToHex(points.tweened[i][4]);
     }
 }
 
@@ -633,13 +653,13 @@ function loopStart () {
     connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
     pointShiftDistance = Math.round(totalScreenPixels / 45);
     polygon = new window.PIXI.Graphics();
-    startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, tweeningFns);
+    stage.addChild(polygon);
+    startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange, tweeningFns);
     polygonPoints = {
         original: startPoints,
         target: JSON.parse(JSON.stringify(startPoints)),
         tweened: JSON.parse(JSON.stringify(startPoints))
     };
-    stage.addChild(polygon);
 
     fpsGraphic = new window.PIXI.Text('0', {font: '25px monospace', fill: 'yellow'});
     fpsGraphic.x = 0;
@@ -656,7 +676,10 @@ function loopStart () {
     window.requestAnimationFrame(loop);
 }
 
-window.onload = loopStart;
+// Use PIXI loader to load image and then start animation
+window.PIXI.loader
+    .add(nodeImg)
+    .load(loopStart);
 
 /* MOUSE AND TOUCH EVENTS */
 
