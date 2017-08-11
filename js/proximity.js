@@ -98,8 +98,12 @@ var hoverMaxDistStart = 75; // initial value for the effect radius of a hover: p
 var hoverMaxDistMax = 1000; // maximum value of hoverMaxDist
 var hoverMaxDist = hoverMaxDistStart;
 var hoverTweeningFn = 5;  // specific tweening function to assign to points in effect radius
-var zRange = 10;  // maximum value for the range of possible z values for a point (unused right now)
+var zRange = 50;  // maximum value for the range of possible z coords for a point
 var nodeImg = 'img/node.png';  // image file location for representing every point
+var nodeImgRes = 100;  // resolution of nodeImg file in pixels (aspect ratio should be square)
+var minNodeDiameter = 3;  // minimum pixel size of point on canvas when z coord is 0, maximum is this value plus zRange
+var drawNodes = true;  // whether to display circles at each point's current position
+var drawLines = true;  // whether to display lines connecting points if they are in connection distance
 
 /* TWEENING FUNCTIONS */
 
@@ -371,7 +375,8 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
     for (i = 0; i < numPoints; i++) {
         x = randomInt(0, maxX - 1);
         y = randomInt(0, maxY - 1);
-        z = randomInt(0, maxZ - 1);  // TODO: do something with the 3rd dimension
+        // z = randomInt(0, maxZ - 1);  // TODO: do something with the 3rd dimension
+        z = 0;  // turns out that 3D is hard and I am a weak 2D boy
         cycleStart = randomInt(0, cycleDuration - 1);
         color = randomColor();
         easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
@@ -479,7 +484,7 @@ function redistributeCycles (points, oldCycleDuration, cycleDuration) {
 /* DRAW FUNCTIONS */
 
 function drawPolygon (polygon, points, counter, tweeningFns) {
-    var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity, scale;
+    var i, j, easingFn, relativeCount, avgColor, shadedColor, connectionCount, dist, connectivity, scale, nodeDiameter;
     // calculate vectors
     for (i = 0; i < points.original.length; i++) {
         easingFn = allTweeningFns[points.target[i][5]];
@@ -520,10 +525,11 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
                 }
                 avgColor = averageColor(points.tweened[i][4], points.tweened[j][4]);
                 shadedColor = shadeColor(avgColor, connectivity);
-                polygon.lineStyle(1, rgbToHex(shadedColor), 1);
-
-                polygon.moveTo(points.tweened[i][0], points.tweened[i][1]);
-                polygon.lineTo(points.tweened[j][0], points.tweened[j][1]);
+                if (drawLines) {
+                    polygon.lineStyle(1, rgbToHex(shadedColor), 1);
+                    polygon.moveTo(points.tweened[i][0], points.tweened[i][1]);
+                    polygon.lineTo(points.tweened[j][0], points.tweened[j][1]);
+                }
                 connectionCount = connectionCount + 1;
             }
         }
@@ -532,15 +538,16 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
             points.tweened[i][4] = shiftColor(points.tweened[i][4], disconnectedColorShiftAmt);
         }
 
-        // draw vectors
-        polygon.lineStyle(1, rgbToHex(points.tweened[i][4]), 1);
-        // TODO: numbers here should be derived from a configuration variable
-        scale = 0.03;
-        sprites[i].scale.x = scale;
-        sprites[i].scale.y = scale;
-        sprites[i].x = points.tweened[i][0] - 1.5;
-        sprites[i].y = points.tweened[i][1] - 1.5;
-        sprites[i].tint = rgbToHex(points.tweened[i][4]);
+        if (drawNodes) {
+            // draw nodes
+            nodeDiameter = (points.tweened[i][2] + minNodeDiameter);
+            scale = nodeDiameter / nodeImgRes;
+            sprites[i].scale.x = scale;
+            sprites[i].scale.y = scale;
+            sprites[i].x = points.tweened[i][0] - (nodeDiameter / 2);
+            sprites[i].y = points.tweened[i][1] - (nodeDiameter / 2);
+            sprites[i].tint = rgbToHex(points.tweened[i][4]);
+        }
     }
 }
 
@@ -752,6 +759,7 @@ document.addEventListener('mouseleave', function (e) {
 /* KEYBOARD EVENTS */
 
 window.addEventListener('keydown', function (e) {
+    var i;
     if (e.keyCode === 37) { // left
         pointShiftBiasX = -1;
     } else if (e.keyCode === 38) { // up
@@ -798,5 +806,19 @@ window.addEventListener('keydown', function (e) {
             fpsEnabled = debug;
             lastLoop = new Date();
         }
+    } else if (e.keyCode === 78) { // n
+        if (drawNodes) {
+            for (i = 0; i < sprites.length; i++) {
+                sprites[i].visible = false;
+            }
+            drawNodes = false;
+        } else {
+            for (i = 0; i < sprites.length; i++) {
+                sprites[i].visible = true;
+            }
+            drawNodes = true;
+        }
+    } else if (e.keyCode === 76) { // l
+        drawLines = !drawLines;
     }
 });

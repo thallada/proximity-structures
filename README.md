@@ -35,8 +35,10 @@ Scrolling your mouse will speed up or slow down time.
 | 4     | makes points bouncy                                 |
 | 5     | makes points elastic                                |
 | 6     | makes points overshoot                              |
-| f     | enables FPS counter                                 |
-| d     | enables debug mode (including FPS counter)          |
+| f     | toggles FPS counter                                 |
+| d     | toggles debug mode (including FPS counter)          |
+| n     | toggles display of nodes                            |
+| l     | toggles display of lines                            |
 
 ### Tweaking
 
