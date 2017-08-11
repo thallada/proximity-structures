@@ -79,7 +79,7 @@ var clickPullRateStart = 0.01; // initial value for the ratio of a point's dista
 var clickPullRateInc = 0.005; // amount to increase clickPullRate every tick that a click is held
 var clickPullRateMax = 0.5; // maximum value of clickPullRate
 var clickPullRate = clickPullRateStart;
-var clickMaxDistStart = 50; // initial value for the effect radius of a click: points this distance from click position will be pulled
+var clickMaxDistStart = 50; // initial value for the effect radius of a click: points this distance from click position will be pulled (overridden if small screen size)
 var clickMaxDistInc = 2; // amount to increase clickMaxDist every tick that a click is held
 var clickMaxDistMax = 5000; // maximum value of clickMaxDist
 var clickMaxDist = clickMaxDistStart;
@@ -94,7 +94,7 @@ var clickTweeningFnEnd = 12; // value of clickTweeningFn during tick after end o
 // hover effect related config vars
 var hoverPushRate = -0.05; // ratio of a point's distance from the hover position to travel in one cycle
 var hoverInertia = 0.8;  // ratio of a point's origin distance from the click position to be added to point's new target
-var hoverMaxDistStart = 75; // initial value for the effect radius of a hover: points this distance from hover position will be pushed
+var hoverMaxDistStart = 75; // initial value for the effect radius of a hover: points this distance from hover position will be pushed (overridden if small screen size)
 var hoverMaxDistMax = 1000; // maximum value of hoverMaxDist
 var hoverMaxDist = hoverMaxDistStart;
 var hoverTweeningFn = 5;  // specific tweening function to assign to points in effect radius
@@ -671,6 +671,8 @@ function loopStart () {
     totalScreenPixels = screenWidth + screenHeight;
     connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
     pointShiftDistance = Math.round(totalScreenPixels / 45);
+    clickMaxDistStart = Math.min(Math.round(totalScreenPixels / 20), clickMaxDistStart);
+    hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistMax);
     polygon = new window.PIXI.Graphics();
     stage.addChild(polygon);
     startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange, tweeningFns);
