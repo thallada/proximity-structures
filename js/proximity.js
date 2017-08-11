@@ -71,7 +71,7 @@ var tweeningSets = { // numbers refer to indicies into the allTweeningsFns array
     snappy: [10, 11, 12, 13, 14, 15],
     bouncy: [16, 17, 18],
     elastic: [19, 20, 21],
-    back: [22, 23, 24]
+    back: [24]
 };
 var tweeningFns = tweeningSets.meandering; // the actual set of tweening functions points will randomly choose from
 // click effect related config vars
