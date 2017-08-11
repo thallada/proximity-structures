@@ -672,7 +672,7 @@ function loopStart () {
     connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
     pointShiftDistance = Math.round(totalScreenPixels / 45);
     clickMaxDistStart = Math.min(Math.round(totalScreenPixels / 20), clickMaxDistStart);
-    hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistMax);
+    hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistStart);
     polygon = new window.PIXI.Graphics();
     stage.addChild(polygon);
     startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange, tweeningFns);
