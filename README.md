@@ -39,6 +39,7 @@ Scrolling your mouse will speed up or slow down time.
 | d     | toggles debug mode (including FPS counter)          |
 | n     | toggles display of nodes                            |
 | l     | toggles display of lines                            |
+| ?     | toggles display of help modal                       |
 
 ### Tweaking
 

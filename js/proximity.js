@@ -761,7 +761,7 @@ document.addEventListener('mouseleave', function (e) {
 /* KEYBOARD EVENTS */
 
 window.addEventListener('keydown', function (e) {
-    var i;
+    var i, help;
     if (e.keyCode === 37) { // left
         pointShiftBiasX = -1;
     } else if (e.keyCode === 38) { // up
@@ -822,5 +822,12 @@ window.addEventListener('keydown', function (e) {
         }
     } else if (e.keyCode === 76) { // l
         drawLines = !drawLines;
+    } else if (e.keyCode === 191) { // ?
+        help = document.getElementById('help');
+        if (help.style.display === 'none') {
+            help.style.display = 'flex';
+        } else {
+            help.style.display = 'none';
+        }
     }
 });
