@@ -248,6 +248,38 @@ function easeInOutCirc (t, b, c, d) {
 
 /* UTILITY FUNCTIONS */
 
+function toggleHelp () {
+    var help, controls;
+    help = document.getElementById('help');
+    controls = document.getElementById('controls');
+    if (help.style.display === 'none') {
+        help.style.display = 'block';
+
+        // hide controls if open (only want one panel open at a time)
+        if (controls.style.display === 'block') {
+            controls.style.display = 'none';
+        }
+    } else {
+        help.style.display = 'none';
+    }
+}
+
+function toggleControls () {
+    var help, controls;
+    help = document.getElementById('help');
+    controls = document.getElementById('controls');
+    if (controls.style.display === 'none') {
+        controls.style.display = 'block';
+
+        // hide help if open (only want one panel open at a time)
+        if (help.style.display === 'block') {
+            help.style.display = 'none';
+        }
+    } else {
+        controls.style.display = 'none';
+    }
+}
+
 function randomInt (min, max) {
     // inclusive of min and max
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -644,6 +676,12 @@ function loop () {
         }
         scrollDelta = 0;
         polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
+
+        // Update control inputs
+        var timeRange = document.getElementsByName('timeRange')[0];
+        var timeInput = document.getElementsByName('timeInput')[0];
+        timeRange.value = cycleDuration;
+        timeInput.value = cycleDuration;
     }
 
     // Tell the `renderer` to `render` the `stage`
@@ -694,6 +732,10 @@ function loopStart () {
 
     scrollDelta = 0;
 
+    // Try to fix bug where click initializes to a bogus value
+    click = null;
+    hover = null;
+
     window.requestAnimationFrame(loop);
 }
 
@@ -702,132 +744,182 @@ window.PIXI.loader
     .add(nodeImg)
     .load(loopStart);
 
-/* MOUSE AND TOUCH EVENTS */
+window.onload = function () {
+    var tweeningInputs;
+    tweeningInputs = document.getElementsByName('tweening');
+    /* MOUSE AND TOUCH EVENTS */
 
-window.addEventListener('mousewheel', function (e) {
-    scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
-});
+    window.addEventListener('mousewheel', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
+    });
 
-window.addEventListener('touchstart', function (e) {
-    click = getMousePos(e.changedTouches[0], resolution);
-    clickEnd = false;
-});
-
-window.addEventListener('touchmove', function (e) {
-    if (click !== null) {
+    window.addEventListener('touchstart', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
         click = getMousePos(e.changedTouches[0], resolution);
-    }
-});
+        clickEnd = false;
+    });
 
-window.addEventListener('touchend', function (e) {
-    clickEnd = true;
-});
-
-window.addEventListener('touchcancel', function (e) {
-    clickEnd = true;
-});
-
-window.addEventListener('mousedown', function (e) {
-    click = getMousePos(e, resolution);
-    clickEnd = false;
-});
-
-window.addEventListener('mousemove', function (e) {
-    var pos = getMousePos(e, resolution);
-    if (click !== null) {
-        click = pos;
-    }
-    hover = pos;
-});
-
-window.addEventListener('mouseup', function (e) {
-    clickEnd = true;
-    hover = null;
-    lastHover = null;
-});
-
-window.addEventListener('mouseleave', function (e) {
-    clickEnd = true;
-    hover = null;
-    lastHover = null;
-});
-
-document.addEventListener('mouseleave', function (e) {
-    clickEnd = true;
-    hover = null;
-    lastHover = null;
-});
-
-/* KEYBOARD EVENTS */
-
-window.addEventListener('keydown', function (e) {
-    var i, help;
-    if (e.keyCode === 37) { // left
-        pointShiftBiasX = -1;
-    } else if (e.keyCode === 38) { // up
-        pointShiftBiasY = -1;
-    } else if (e.keyCode === 39) { // right
-        pointShiftBiasX = 1;
-    } else if (e.keyCode === 40) { // down
-        pointShiftBiasY = 1;
-    } else if (e.keyCode === 49) { // 1
-        tweeningFns = tweeningSets.linear;
-    } else if (e.keyCode === 50) { // 2
-        tweeningFns = tweeningSets.meandering;
-    } else if (e.keyCode === 51) { // 3
-        tweeningFns = tweeningSets.snappy;
-    } else if (e.keyCode === 52) { // 4
-        tweeningFns = tweeningSets.bouncy;
-    } else if (e.keyCode === 53) { // 5
-        tweeningFns = tweeningSets.elastic;
-    } else if (e.keyCode === 54) { // 6
-        tweeningFns = tweeningSets.back;
-    } else if (e.keyCode === 70) { // f
-        // toggle fpsCounter
-        if (fpsEnabled) {
-            stage.removeChild(fpsGraphic);
-            fpsEnabled = false;
-        } else {
-            stage.addChild(fpsGraphic);
-            fpsEnabled = true;
-            lastLoop = new Date();
+    window.addEventListener('touchmove', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        if (click !== null) {
+            click = getMousePos(e.changedTouches[0], resolution);
         }
-    } else if (e.keyCode === 68) { // d
-        // toggle debug
-        if (debug) {
+    });
+
+    window.addEventListener('touchend', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        clickEnd = true;
+    });
+
+    window.addEventListener('touchcancel', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        clickEnd = true;
+    });
+
+    window.addEventListener('mousedown', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        click = getMousePos(e, resolution);
+        clickEnd = false;
+    });
+
+    window.addEventListener('mousemove', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        var pos = getMousePos(e, resolution);
+        if (click !== null) {
+            click = pos;
+        }
+        hover = pos;
+    });
+
+    window.addEventListener('mouseup', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        clickEnd = true;
+        hover = null;
+        lastHover = null;
+    });
+
+    window.addEventListener('mouseleave', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        clickEnd = true;
+        hover = null;
+        lastHover = null;
+    });
+
+    document.addEventListener('mouseleave', function (e) {
+        if (e.target.tagName !== 'CANVAS') return;
+        clickEnd = true;
+        hover = null;
+        lastHover = null;
+    });
+
+    /* KEYBOARD EVENTS */
+
+    window.addEventListener('keydown', function (e) {
+        var i;
+        if (e.target.tagName !== 'CANVAS' || e.target.tagName !== 'BODY') return;
+        if (e.keyCode === 37) { // left
+            pointShiftBiasX = -1;
+        } else if (e.keyCode === 38) { // up
+            pointShiftBiasY = -1;
+        } else if (e.keyCode === 39) { // right
+            pointShiftBiasX = 1;
+        } else if (e.keyCode === 40) { // down
+            pointShiftBiasY = 1;
+        } else if (e.keyCode === 49) { // 1
+            tweeningFns = tweeningSets.linear;
+            tweeningInputs[0].checked = true;
+        } else if (e.keyCode === 50) { // 2
+            tweeningFns = tweeningSets.meandering;
+            tweeningInputs[1].checked = true;
+        } else if (e.keyCode === 51) { // 3
+            tweeningFns = tweeningSets.snappy;
+            tweeningInputs[2].checked = true;
+        } else if (e.keyCode === 52) { // 4
+            tweeningFns = tweeningSets.bouncy;
+            tweeningInputs[3].checked = true;
+        } else if (e.keyCode === 53) { // 5
+            tweeningFns = tweeningSets.elastic;
+            tweeningInputs[4].checked = true;
+        } else if (e.keyCode === 54) { // 6
+            tweeningFns = tweeningSets.back;
+            tweeningInputs[5].checked = true;
+        } else if (e.keyCode === 70) { // f
+            // toggle fpsCounter
             if (fpsEnabled) {
                 stage.removeChild(fpsGraphic);
-            }
-            debug = false;
-            fpsEnabled = debug;
-        } else {
-            if (!fpsEnabled) {
+                fpsEnabled = false;
+            } else {
                 stage.addChild(fpsGraphic);
+                fpsEnabled = true;
+                lastLoop = new Date();
             }
-            debug = true;
-            fpsEnabled = debug;
-            lastLoop = new Date();
-        }
-    } else if (e.keyCode === 78) { // n
-        if (drawNodes) {
-            for (i = 0; i < sprites.length; i++) {
-                sprites[i].visible = false;
+        } else if (e.keyCode === 68) { // d
+            // toggle debug
+            if (debug) {
+                if (fpsEnabled) {
+                    stage.removeChild(fpsGraphic);
+                }
+                debug = false;
+                fpsEnabled = debug;
+            } else {
+                if (!fpsEnabled) {
+                    stage.addChild(fpsGraphic);
+                }
+                debug = true;
+                fpsEnabled = debug;
+                lastLoop = new Date();
             }
-            drawNodes = false;
-        } else {
-            for (i = 0; i < sprites.length; i++) {
-                sprites[i].visible = true;
+        } else if (e.keyCode === 78) { // n
+            if (drawNodes) {
+                for (i = 0; i < sprites.length; i++) {
+                    sprites[i].visible = false;
+                }
+                drawNodes = false;
+            } else {
+                for (i = 0; i < sprites.length; i++) {
+                    sprites[i].visible = true;
+                }
+                drawNodes = true;
             }
-            drawNodes = true;
+        } else if (e.keyCode === 76) { // l
+            drawLines = !drawLines;
+        } else if (e.keyCode === 191) { // ?
+            toggleHelp();
         }
-    } else if (e.keyCode === 76) { // l
-        drawLines = !drawLines;
-    } else if (e.keyCode === 191) { // ?
-        help = document.getElementById('help');
-        if (help.style.display === 'none') {
-            help.style.display = 'flex';
-        } else {
-            help.style.display = 'none';
-        }
+    });
+
+    /* BUTTON EVENTS */
+
+    document.getElementById('toggle-help').addEventListener('click', function () {
+        toggleHelp();
+    }, false);
+
+    document.getElementById('toggle-controls').addEventListener('click', function () {
+        toggleControls();
+    }, false);
+
+    var timeRange, timeInput;
+    timeRange = document.getElementsByName('timeRange')[0];
+    timeRange.value = cycleDuration;
+    timeRange.addEventListener('input', function (e) {
+        var oldCycleDuration = cycleDuration;
+        cycleDuration = parseInt(this.value, 10);
+        polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
+    });
+
+    timeInput = document.getElementsByName('timeInput')[0];
+    timeInput.value = cycleDuration;
+    timeInput.addEventListener('input', function (e) {
+        var oldCycleDuration = cycleDuration;
+        cycleDuration = parseInt(this.value, 10);
+        polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
+    });
+
+    var i;
+    for (i = 0; i < tweeningInputs.length; i++) {
+        tweeningInputs[i].addEventListener('change', function (e) {
+            tweeningFns = tweeningSets[this.value];
+        });
     }
-});
+};
