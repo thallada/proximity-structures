@@ -26,7 +26,7 @@ td, th {
 
 form input, form button {
   margin-bottom: 5px;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 form label, form label strong {
@@ -42,8 +42,8 @@ form label strong {
 
 input {
   color: white;
-  background-color: #2e2e2e;
-  border-color: #4a4a4a;
+  background-color: rgba(46, 46, 46, 0.2);
+  border-color: #222222;
 }
 
 input[type=number] {
@@ -74,4 +74,11 @@ div.panel {
   top: 0;
   left: 0;
   z-index: 10;
+}
+
+#close-controls, #close-help {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 3px 6px;
 }

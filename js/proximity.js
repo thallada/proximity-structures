@@ -248,7 +248,7 @@ function easeInOutCirc (t, b, c, d) {
 }
 /* eslint-enable no-unused-vars */
 
-/* UTILITY FUNCTIONS */
+/* TOGGLE FUNCTIONS */
 
 function toggleHelp () {
     var help, controls;
@@ -337,6 +337,8 @@ function toggleLines () {
     drawLines = !drawLines;
     linesCheckbox.checked = drawLines;
 }
+
+/* UTILITY FUNCTIONS */
 
 function randomInt (min, max) {
     // inclusive of min and max
@@ -575,6 +577,14 @@ function randomizeCycles (points, cycleDuration) {
     /* Assigns every point a new random cycle start */
     for (var i = 0; i < points.original.length; i++) {
         points.target[i][3] = randomInt(0, cycleDuration - 1);
+    }
+    return points;
+}
+
+function synchronizeCycles (points, cycleDuration) {
+    /* Assigns every point the same cycle start (0) */
+    for (var i = 0; i < points.original.length; i++) {
+        points.target[i][3] = 0;
     }
     return points;
 }
@@ -849,12 +859,10 @@ window.onload = function () {
     });
 
     window.addEventListener('touchend', function (e) {
-        if (e.target.tagName !== 'CANVAS') return;
         clickEnd = true;
     });
 
     window.addEventListener('touchcancel', function (e) {
-        if (e.target.tagName !== 'CANVAS') return;
         clickEnd = true;
     });
 
@@ -875,21 +883,18 @@ window.onload = function () {
     });
 
     window.addEventListener('mouseup', function (e) {
-        if (e.target.tagName !== 'CANVAS') return;
         clickEnd = true;
         hover = null;
         lastHover = null;
     });
 
     window.addEventListener('mouseleave', function (e) {
-        if (e.target.tagName !== 'CANVAS') return;
         clickEnd = true;
         hover = null;
         lastHover = null;
     });
 
     document.addEventListener('mouseleave', function (e) {
-        if (e.target.tagName !== 'CANVAS') return;
         clickEnd = true;
         hover = null;
         lastHover = null;
@@ -949,6 +954,19 @@ window.onload = function () {
         toggleControls();
     }, false);
 
+    document.getElementById('close-help').addEventListener('click', function () {
+        toggleHelp();
+    }, false);
+
+    document.getElementById('close-controls').addEventListener('click', function () {
+        toggleControls();
+    }, false);
+
+    document.getElementById('synchronize-cycles').addEventListener('click', function () {
+        synchronizeCycles(polygonPoints, cycleDuration);
+        return false;
+    }, false);
+
     document.getElementById('randomize-cycles').addEventListener('click', function () {
         randomizeCycles(polygonPoints, cycleDuration);
         return false;
@@ -1003,6 +1021,19 @@ window.onload = function () {
     lineSizeRange.value = lineSize;
     lineSizeRange.addEventListener('input', function (e) {
         lineSize = parseInt(this.value, 10);
+    });
+
+    var colorShiftRange, colorShiftInput;
+    colorShiftRange = document.getElementsByName('colorShiftRange')[0];
+    colorShiftRange.value = disconnectedColorShiftAmt;
+    colorShiftRange.addEventListener('input', function (e) {
+        disconnectedColorShiftAmt = parseInt(this.value, 10);
+    });
+
+    colorShiftRange = document.getElementsByName('colorShiftRange')[0];
+    colorShiftRange.value = disconnectedColorShiftAmt;
+    colorShiftRange.addEventListener('input', function (e) {
+        disconnectedColorShiftAmt = parseInt(this.value, 10);
     });
 
 

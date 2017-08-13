@@ -21,6 +21,7 @@
       <button id="toggle-controls">Settings</button>
     </div>
     <div id="help" class="panel" style="display: none;">
+      <button type="button" id="close-help">x</button>
       <h2>Help</h2>
       <table>
         <tr>
@@ -106,11 +107,14 @@
       </table>
     </div>
     <div id="controls" class="panel" style="display: none;">
+      <button type="button" id="close-controls">x</button>
 			<form action="">
+        <button type="button" id="reset">Reset</button><br />
         <label><strong>Cycle Duration:</strong>
           <input type="range" name="timeRange" min="1" max="360" value="60" oninput="this.form.timeInput.value=this.value" />
           <input type="number" name="timeInput" min="1" max="360" value="60" oninput="this.form.timeRange.value=this.value" />
-          <button type="button" id="randomize-cycles">Randomize Point Cycle Starts</button>
+          <button type="button" id="synchronize-cycles">Synchronize Point Cycles</button>
+          <button type="button" id="randomize-cycles">Randomize Point Cycles</button>
         </label><br />
         <label><strong>Point Size:</strong>
           <input type="range" name="pointSizeRange" min="0" max="50" value="0" oninput="this.form.pointSizeInput.value=this.value" />
@@ -119,6 +123,10 @@
         <label><strong>Line Size:</strong>
           <input type="range" name="lineSizeRange" min="1" max="50" value="1" oninput="this.form.lineSizeInput.value=this.value" />
           <input type="number" name="lineSizeInput" min="1" max="50" value="1" oninput="this.form.lineSizeRange.value=this.value" />
+        </label><br />
+        <label><strong>Color Shift:</strong>
+          <input type="range" name="colorShiftRange" min="0" max="85" value="10" oninput="this.form.colorShiftInput.value=this.value" />
+          <input type="number" name="colorShiftInput" min="0" max="85" value="10" oninput="this.form.colorShiftRange.value=this.value" />
         </label><br />
         <label><strong>Point tweening:</strong>
           <label><input type="radio" name="tweening" value="linear" /> Linear</label>
