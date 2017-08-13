@@ -18,7 +18,7 @@
     <script src="js/proximity.js"></script>
     <div id="options">
       <button id="toggle-help">Help</button>
-      <button id="toggle-controls">Controls</button>
+      <button id="toggle-controls">Settings</button>
     </div>
     <div id="help" class="panel" style="display: none;">
       <h2>Help</h2>
@@ -107,19 +107,23 @@
     </div>
     <div id="controls" class="panel" style="display: none;">
 			<form action="">
-        <label>Cycle Duration:
+        <label><strong>Cycle Duration:</strong>
           <input type="range" name="timeRange" min="1" max="360" value="0" oninput="this.form.timeInput.value=this.value" />
           <input type="number" name="timeInput" min="1" max="360" value="0" oninput="this.form.timeRange.value=this.value" />
         </label>
         <button type="button" id="randomize-cycles">Randomize Point Cycles</button><br />
-        <label>Point tweening:
+        <label><strong>Point tweening:</strong>
           <label><input type="radio" name="tweening" value="linear" /> Linear</label>
           <label><input type="radio" name="tweening" value="meandering" checked /> Meandering</label>
           <label><input type="radio" name="tweening" value="snappy" /> Snappy</label>
           <label><input type="radio" name="tweening" value="bouncy" /> Bouncy</label>
           <label><input type="radio" name="tweening" value="elastic" /> Elastic</label>
           <label><input type="radio" name="tweening" value="back" /> Overshoot</label>
-        </label>
+        </label><br />
+        <label><strong>Debugging:</strong>
+          <label><input type="checkbox" name="debug"> Debug</label>
+          <label><input type="checkbox" name="fpsCounter"> FPS Counter</label>
+        <label>
 			</form>
     </div>
   </body>

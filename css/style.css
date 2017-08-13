@@ -24,7 +24,12 @@ td, th {
 }
 
 form input, form button {
-  margin: 5px;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+
+form label, form label strong {
+  margin-right: 10px;
 }
 
 input {

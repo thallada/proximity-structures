@@ -280,6 +280,40 @@ function toggleControls () {
     }
 }
 
+function toggleFPS () {
+    var fpsCheckbox = document.getElementsByName('fpsCounter')[0];
+    if (fpsEnabled) {
+        stage.removeChild(fpsGraphic);
+        fpsEnabled = false;
+    } else {
+        stage.addChild(fpsGraphic);
+        fpsEnabled = true;
+        lastLoop = new Date();
+    }
+    fpsCheckbox.checked = fpsEnabled;
+}
+
+function toggleDebug () {
+    var fpsCheckbox = document.getElementsByName('fpsCounter')[0];
+    var debugCheckbox = document.getElementsByName('debug')[0];
+    if (debug) {
+        if (fpsEnabled) {
+            stage.removeChild(fpsGraphic);
+        }
+        debug = false;
+        fpsEnabled = debug;
+    } else {
+        if (!fpsEnabled) {
+            stage.addChild(fpsGraphic);
+        }
+        debug = true;
+        fpsEnabled = debug;
+        lastLoop = new Date();
+    }
+    fpsCheckbox.checked = fpsEnabled;
+    debugCheckbox.checked = debug;
+}
+
 function randomInt (min, max) {
     // inclusive of min and max
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -754,8 +788,10 @@ window.PIXI.loader
     .load(loopStart);
 
 window.onload = function () {
-    var tweeningInputs;
+    var tweeningInputs, debug, fpsCheckbox;
     tweeningInputs = document.getElementsByName('tweening');
+    debugCheckbox = document.getElementsByName('debug')[0];
+    fpsCheckbox = document.getElementsByName('fpsCounter')[0];
     /* MOUSE AND TOUCH EVENTS */
 
     window.addEventListener('mousewheel', function (e) {
@@ -854,31 +890,9 @@ window.onload = function () {
             tweeningFns = tweeningSets.back;
             tweeningInputs[5].checked = true;
         } else if (e.keyCode === 70) { // f
-            // toggle fpsCounter
-            if (fpsEnabled) {
-                stage.removeChild(fpsGraphic);
-                fpsEnabled = false;
-            } else {
-                stage.addChild(fpsGraphic);
-                fpsEnabled = true;
-                lastLoop = new Date();
-            }
+            toggleFPS();
         } else if (e.keyCode === 68) { // d
-            // toggle debug
-            if (debug) {
-                if (fpsEnabled) {
-                    stage.removeChild(fpsGraphic);
-                }
-                debug = false;
-                fpsEnabled = debug;
-            } else {
-                if (!fpsEnabled) {
-                    stage.addChild(fpsGraphic);
-                }
-                debug = true;
-                fpsEnabled = debug;
-                lastLoop = new Date();
-            }
+            toggleDebug();
         } else if (e.keyCode === 78) { // n
             if (drawNodes) {
                 for (i = 0; i < sprites.length; i++) {
@@ -937,4 +951,12 @@ window.onload = function () {
             tweeningFns = tweeningSets[this.value];
         });
     }
+
+    debugCheckbox.addEventListener('change', function (e) {
+        toggleDebug();
+    });
+
+    fpsCheckbox.addEventListener('change', function (e) {
+        toggleFPS();
+    });
 };
