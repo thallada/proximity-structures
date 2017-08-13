@@ -483,6 +483,7 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
         easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
         // save PIXI Sprite for each point in array
         sprite = createSprite();
+        if (!drawNodes) sprite.visible = false;
         sprites.push(sprite);
         stage.addChild(sprite);
         points[i] = [x, y, z, cycleStart, color, easingFn];
@@ -1035,6 +1036,18 @@ window.onload = function () {
         numPoints = parseInt(this.value, 10);
     });
 
+    var maxTravelRange = document.getElementsByName('maxTravelRange')[0];
+    maxTravelRange.value = pointShiftDistance;
+    maxTravelRange.addEventListener('input', function (e) {
+        pointShiftDistance = parseInt(this.value, 10);
+    });
+
+    var maxTravelInput = document.getElementsByName('maxTravelInput')[0];
+    maxTravelInput.value = pointShiftDistance;
+    maxTravelInput.addEventListener('input', function (e) {
+        pointShiftDistance = parseInt(this.value, 10);
+    });
+
     var timeRange = document.getElementsByName('timeRange')[0];
     timeRange.value = cycleDuration;
     timeRange.addEventListener('input', function (e) {
@@ -1077,9 +1090,9 @@ window.onload = function () {
         lineSize = parseInt(this.value, 10);
     });
 
-    var lineSizeRange = document.getElementsByName('lineSizeRange')[0];
-    lineSizeRange.value = lineSize;
-    lineSizeRange.addEventListener('input', function (e) {
+    var lineSizeInput = document.getElementsByName('lineSizeInput')[0];
+    lineSizeInput.value = lineSize;
+    lineSizeInput.addEventListener('input', function (e) {
         lineSize = parseInt(this.value, 10);
     });
 
@@ -1089,9 +1102,9 @@ window.onload = function () {
         disconnectedColorShiftAmt = parseInt(this.value, 10);
     });
 
-    var colorShiftRange = document.getElementsByName('colorShiftRange')[0];
-    colorShiftRange.value = disconnectedColorShiftAmt;
-    colorShiftRange.addEventListener('input', function (e) {
+    var colorShiftInput = document.getElementsByName('colorShiftInput')[0];
+    colorShiftInput.value = disconnectedColorShiftAmt;
+    colorShiftInput.addEventListener('input', function (e) {
         disconnectedColorShiftAmt = parseInt(this.value, 10);
     });
 

@@ -117,12 +117,16 @@
           <button type="button" id="reset">Reset Points</button>
         </label><br />
         <label><strong>Connection Distance:</strong>
-          <input type="range" name="connectDistRange" min="0" max="5000" value="0" oninput="this.form.connectDistInput.value=this.value" />
-          <input type="number" name="connectDistInput" min="0" max="5000" value="0" oninput="this.form.connectDistRange.value=this.value" />
+          <input type="range" name="connectDistRange" min="0" max="1000" value="0" oninput="this.form.connectDistInput.value=this.value" />
+          <input type="number" name="connectDistInput" min="0" max="1000" value="0" oninput="this.form.connectDistRange.value=this.value" />
         </label><br />
         <label><strong>Connection Limit:</strong>
           <input type="range" name="connectLimitRange" min="0" max="100" value="10" oninput="this.form.connectLimitInput.value=this.value" />
           <input type="number" name="connectLimitInput" min="0" max="100" value="10" oninput="this.form.connectLimitRange.value=this.value" />
+        </label><br />
+        <label><strong>Max Travel Distance:</strong>
+          <input type="range" name="maxTravelRange" min="0" max="1000" value="0" oninput="this.form.maxTravelInput.value=this.value" />
+          <input type="number" name="maxTravelInput" min="0" max="1000" value="0" oninput="this.form.maxTravelRange.value=this.value" />
         </label><br />
         <label><strong>Cycle Duration:</strong>
           <input type="range" name="timeRange" min="1" max="360" value="60" oninput="this.form.timeInput.value=this.value" />
