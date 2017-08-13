@@ -21,6 +21,7 @@ var fpsGraphic;
 var scrollDelta;
 var pointShiftBiasX;
 var pointShiftBiasY;
+var numPoints;
 
 // global non-configurable vars (modifying these might break stuff)
 var click = null;
@@ -465,6 +466,13 @@ function createSprite () {
 function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
     var i, x, y, z, color, cycleStart, easingFn, sprite;
     var points = [];
+    if (sprites.length > 0) {
+        // need to clear out old sprites
+        for (i = 0; i < sprites.length; i++) {
+            stage.removeChild(sprites[i]);
+        }
+        sprites = [];
+    }
     for (i = 0; i < numPoints; i++) {
         x = randomInt(0, maxX - 1);
         y = randomInt(0, maxY - 1);
@@ -473,12 +481,10 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
         cycleStart = randomInt(0, cycleDuration - 1);
         color = randomColor();
         easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
-        if (sprites.length <= i) {
-            // save PIXI Sprite for each point in array
-            sprite = createSprite();
-            sprites.push(sprite);
-            stage.addChild(sprite);
-        }
+        // save PIXI Sprite for each point in array
+        sprite = createSprite();
+        sprites.push(sprite);
+        stage.addChild(sprite);
         points[i] = [x, y, z, cycleStart, color, easingFn];
     }
     return points;
@@ -530,7 +536,8 @@ function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, rese
         targetYDiff = clickPos.y - points.target[i][1];
         originXDiff = clickPos.x - points.original[i][0];
         originYDiff = clickPos.y - points.original[i][1];
-        if (Math.abs(targetXDiff) <= maxDist && Math.abs(targetYDiff) <= maxDist) { // point is within effect radius
+        if (Math.sqrt((targetXDiff * targetXDiff) + (targetYDiff * targetYDiff)) <= maxDist) {
+            // point is within effect radius
             if (resetPoints) {
                 // Good for changing directions, reset the points original positions to their current positions
                 points.original[i][0] = points.tweened[i][0];
@@ -558,6 +565,12 @@ function pullPoints (points, clickPos, pullRate, inertia, maxDist, counter, rese
                 points.target[i][6] = false;  // marks this point as unaffected
             }
         }
+    }
+}
+
+function clearAffectedPoints (points) {
+    for (var i = 0; i < points.target.length; i++) {
+        points.target[i][6] = false;
     }
 }
 
@@ -673,8 +686,7 @@ function loop () {
 
     if (reset === true) {
         var newPoints;
-        newPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange,
-                                    tweeningFns);
+        newPoints = getRandomPoints(numPoints, screenWidth, screenHeight, zRange, tweeningFns);
         polygonPoints = {
             original: newPoints,
             target: JSON.parse(JSON.stringify(newPoints)),
@@ -721,12 +733,7 @@ function loop () {
             clickPullRate = clickPullRateStart;
             clickInertia = clickInertiaStart;
             clickTweeningFn = clickTweeningFnStart;
-
-            // clear affected status for all points
-            var i;
-            for (i = 0; i < polygonPoints.target.length; i++) {
-                polygonPoints.target[i][6] = false;
-            }
+            clearAffectedPoints(polygonPoints);
         }
     } else if (hover !== null) {
         if (lastHover !== null) {
@@ -810,7 +817,8 @@ function loopStart () {
     hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistStart);
     polygon = new window.PIXI.Graphics();
     stage.addChild(polygon);
-    startPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange, tweeningFns);
+    numPoints = Math.round(totalScreenPixels / 6);
+    startPoints = getRandomPoints(numPoints, screenWidth, screenHeight, zRange, tweeningFns);
     polygonPoints = {
         original: startPoints,
         target: JSON.parse(JSON.stringify(startPoints)),
@@ -907,12 +915,14 @@ window.onload = function () {
         clickEnd = true;
         hover = null;
         lastHover = null;
+        clearAffectedPoints(polygonPoints);
     });
 
     document.addEventListener('mouseleave', function (e) {
         clickEnd = true;
         hover = null;
         lastHover = null;
+        clearAffectedPoints(polygonPoints);
     });
 
     /* KEYBOARD EVENTS */
@@ -989,8 +999,43 @@ window.onload = function () {
         reset = true;
     }, false);
 
-    var timeRange, timeInput;
-    timeRange = document.getElementsByName('timeRange')[0];
+    var connectDistRange = document.getElementsByName('connectDistRange')[0];
+    connectDistRange.value = connectionDistance;
+    connectDistRange.addEventListener('input', function (e) {
+        connectionDistance = parseInt(this.value, 10);
+    });
+
+    var connectDistInput = document.getElementsByName('connectDistInput')[0];
+    connectDistInput.value = connectionDistance;
+    connectDistInput.addEventListener('input', function (e) {
+        connectionDistance = parseInt(this.value, 10);
+    });
+
+    var connectLimitRange = document.getElementsByName('connectLimitRange')[0];
+    connectLimitRange.value = connectionLimit;
+    connectLimitRange.addEventListener('input', function (e) {
+        connectionLimit = parseInt(this.value, 10);
+    });
+
+    var connectLimitInput = document.getElementsByName('connectLimitInput')[0];
+    connectLimitInput.value = connectionLimit;
+    connectLimitInput.addEventListener('input', function (e) {
+        connectionLimit = parseInt(this.value, 10);
+    });
+
+    var pointsNumRange = document.getElementsByName('pointsNumRange')[0];
+    pointsNumRange.value = numPoints;
+    pointsNumRange.addEventListener('input', function (e) {
+        numPoints = parseInt(this.value, 10);
+    });
+
+    var pointsNumInput = document.getElementsByName('pointsNumInput')[0];
+    pointsNumInput.value = numPoints;
+    pointsNumInput.addEventListener('input', function (e) {
+        numPoints = parseInt(this.value, 10);
+    });
+
+    var timeRange = document.getElementsByName('timeRange')[0];
     timeRange.value = cycleDuration;
     timeRange.addEventListener('input', function (e) {
         var oldCycleDuration = cycleDuration;
@@ -998,7 +1043,7 @@ window.onload = function () {
         polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
     });
 
-    timeInput = document.getElementsByName('timeInput')[0];
+    var timeInput = document.getElementsByName('timeInput')[0];
     timeInput.value = cycleDuration;
     timeInput.addEventListener('input', function (e) {
         var oldCycleDuration = cycleDuration;
@@ -1014,40 +1059,37 @@ window.onload = function () {
         });
     }
 
-    var pointSizeRange, pointSizeInput;
-    pointSizeRange = document.getElementsByName('pointSizeRange')[0];
+    var pointSizeRange = document.getElementsByName('pointSizeRange')[0];
     pointSizeRange.value = nodeSize;
     pointSizeRange.addEventListener('input', function (e) {
         nodeSize = parseInt(this.value, 10);
     });
 
-    pointSizeInput = document.getElementsByName('pointSizeInput')[0];
+    var pointSizeInput = document.getElementsByName('pointSizeInput')[0];
     pointSizeInput.value = nodeSize;
     pointSizeInput.addEventListener('input', function (e) {
         nodeSize = parseInt(this.value, 10);
     });
 
-    var lineSizeRange, lineSizeInput;
-    lineSizeRange = document.getElementsByName('lineSizeRange')[0];
+    var lineSizeRange = document.getElementsByName('lineSizeRange')[0];
     lineSizeRange.value = lineSize;
     lineSizeRange.addEventListener('input', function (e) {
         lineSize = parseInt(this.value, 10);
     });
 
-    lineSizeRange = document.getElementsByName('lineSizeRange')[0];
+    var lineSizeRange = document.getElementsByName('lineSizeRange')[0];
     lineSizeRange.value = lineSize;
     lineSizeRange.addEventListener('input', function (e) {
         lineSize = parseInt(this.value, 10);
     });
 
-    var colorShiftRange, colorShiftInput;
-    colorShiftRange = document.getElementsByName('colorShiftRange')[0];
+    var colorShiftRange = document.getElementsByName('colorShiftRange')[0];
     colorShiftRange.value = disconnectedColorShiftAmt;
     colorShiftRange.addEventListener('input', function (e) {
         disconnectedColorShiftAmt = parseInt(this.value, 10);
     });
 
-    colorShiftRange = document.getElementsByName('colorShiftRange')[0];
+    var colorShiftRange = document.getElementsByName('colorShiftRange')[0];
     colorShiftRange.value = disconnectedColorShiftAmt;
     colorShiftRange.addEventListener('input', function (e) {
         disconnectedColorShiftAmt = parseInt(this.value, 10);

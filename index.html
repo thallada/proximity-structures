@@ -108,8 +108,22 @@
     </div>
     <div id="controls" class="panel" style="display: none;">
       <button type="button" id="close-controls">x</button>
+      <h2>Settings</h2>
+      <p class="warning">WARNING: Certain combinations of settings can crash your browser or tab.</p>
 			<form action="">
-        <button type="button" id="reset">Reset</button><br />
+        <label><strong>Points Count:</strong>
+          <input type="range" name="pointsNumRange" min="0" max="5000" value="0" oninput="this.form.pointsNumInput.value=this.value" />
+          <input type="number" name="pointsNumInput" min="0" max="5000" value="0" oninput="this.form.pointsNumRange.value=this.value" />
+          <button type="button" id="reset">Reset Points</button>
+        </label><br />
+        <label><strong>Connection Distance:</strong>
+          <input type="range" name="connectDistRange" min="0" max="5000" value="0" oninput="this.form.connectDistInput.value=this.value" />
+          <input type="number" name="connectDistInput" min="0" max="5000" value="0" oninput="this.form.connectDistRange.value=this.value" />
+        </label><br />
+        <label><strong>Connection Limit:</strong>
+          <input type="range" name="connectLimitRange" min="0" max="100" value="10" oninput="this.form.connectLimitInput.value=this.value" />
+          <input type="number" name="connectLimitInput" min="0" max="100" value="10" oninput="this.form.connectLimitRange.value=this.value" />
+        </label><br />
         <label><strong>Cycle Duration:</strong>
           <input type="range" name="timeRange" min="1" max="360" value="60" oninput="this.form.timeInput.value=this.value" />
           <input type="number" name="timeInput" min="1" max="360" value="60" oninput="this.form.timeRange.value=this.value" />

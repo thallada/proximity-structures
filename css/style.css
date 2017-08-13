@@ -61,7 +61,7 @@ div.panel {
   padding: 5px;
 }
 
-#help h2 {
+.panel h2 {
   text-align: center;
 }
 
@@ -81,4 +81,12 @@ div.panel {
   top: 0;
   right: 0;
   padding: 3px 6px;
+  font-family: monospace;
 }
+
+#controls p.warning {
+  color: darksalmon;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
