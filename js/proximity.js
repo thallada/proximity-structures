@@ -28,6 +28,7 @@ var hover = null;
 var lastHover = null;
 var clickEnd = false;
 var sprites = [];
+var reset = false;
 
 // global configurable vars
 var resolution = 1; // scaling for PIXI renderer
@@ -472,10 +473,12 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
         cycleStart = randomInt(0, cycleDuration - 1);
         color = randomColor();
         easingFn = tweeningFns[Math.floor(Math.random() * tweeningFns.length)];
-        // save PIXI Sprite for each point in array
-        sprite = createSprite();
-        sprites.push(sprite);
-        stage.addChild(sprite);
+        if (sprites.length <= i) {
+            // save PIXI Sprite for each point in array
+            sprite = createSprite();
+            sprites.push(sprite);
+            stage.addChild(sprite);
+        }
         points[i] = [x, y, z, cycleStart, color, easingFn];
     }
     return points;
@@ -667,6 +670,18 @@ function loop () {
     renderer.resize(screenWidth, screenHeight);
 
     polygon.clear();
+
+    if (reset === true) {
+        var newPoints;
+        newPoints = getRandomPoints(Math.round(totalScreenPixels / 6), screenWidth, screenHeight, zRange,
+                                    tweeningFns);
+        polygonPoints = {
+            original: newPoints,
+            target: JSON.parse(JSON.stringify(newPoints)),
+            tweened: JSON.parse(JSON.stringify(newPoints))
+        };
+        reset = false;
+    }
 
     if (click !== null) {
         if (clickEnd) {
@@ -964,12 +979,14 @@ window.onload = function () {
 
     document.getElementById('synchronize-cycles').addEventListener('click', function () {
         synchronizeCycles(polygonPoints, cycleDuration);
-        return false;
     }, false);
 
     document.getElementById('randomize-cycles').addEventListener('click', function () {
         randomizeCycles(polygonPoints, cycleDuration);
-        return false;
+    }, false);
+
+    document.getElementById('reset').addEventListener('click', function () {
+        reset = true;
     }, false);
 
     var timeRange, timeInput;
