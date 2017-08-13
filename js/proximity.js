@@ -103,8 +103,8 @@ var hoverTweeningFn = 5;  // specific tweening function to assign to points in e
 var zRange = 50;  // maximum value for the range of possible z coords for a point
 var nodeImg = 'img/node.png';  // image file location for representing every point
 var nodeImgRes = 100;  // resolution of nodeImg file in pixels (aspect ratio should be square)
-var minNodeDiameter = 3;  // minimum pixel size of point on canvas when z coord is 0, maximum is this value plus zRange
-var nodeSize = 0;  // with z coord ignored, this value is used for scaling the drawing for each node
+// var minNodeDiameter = 3;  // minimum pixel size of point on canvas when z coord is 0, maximum is this value plus zRange
+var nodeSize = 3;  // with z coord ignored, this value is used for scaling the drawing for each node
 var drawNodes = true;  // whether to display circles at each point's current position
 var drawLines = true;  // whether to display lines connecting points if they are in connection distance
 var lineSize = 1;  // thickness in pixels of drawn lines between points
@@ -665,7 +665,7 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
 
         if (drawNodes) {
             // draw nodes
-            nodeDiameter = (nodeSize + minNodeDiameter);
+            nodeDiameter = nodeSize;
             scale = nodeDiameter / nodeImgRes;
             sprites[i].scale.x = scale;
             sprites[i].scale.y = scale;
