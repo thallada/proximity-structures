@@ -513,6 +513,14 @@ function redistributeCycles (points, oldCycleDuration, cycleDuration) {
     return points;
 }
 
+function randomizeCycles (points, cycleDuration) {
+    /* Assigns every point a new random cycle start */
+    for (var i = 0; i < points.original.length; i++) {
+        points.target[i][3] = randomInt(0, cycleDuration - 1);
+    }
+    return points;
+}
+
 /* DRAW FUNCTIONS */
 
 function drawPolygon (polygon, points, counter, tweeningFns) {
@@ -721,7 +729,8 @@ function loopStart () {
     };
 
     fpsGraphic = new window.PIXI.Text('0', {font: '25px monospace', fill: 'yellow'});
-    fpsGraphic.x = 0;
+    fpsGraphic.anchor = new window.PIXI.Point(1, 0);
+    fpsGraphic.x = screenWidth - 1;
     fpsGraphic.y = 0;
 
     if (fpsEnabled) {
@@ -897,6 +906,11 @@ window.onload = function () {
 
     document.getElementById('toggle-controls').addEventListener('click', function () {
         toggleControls();
+    }, false);
+
+    document.getElementById('randomize-cycles').addEventListener('click', function () {
+        randomizeCycles(polygonPoints, cycleDuration);
+        return false;
     }, false);
 
     var timeRange, timeInput;
