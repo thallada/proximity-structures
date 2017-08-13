@@ -108,10 +108,18 @@
     <div id="controls" class="panel" style="display: none;">
 			<form action="">
         <label><strong>Cycle Duration:</strong>
-          <input type="range" name="timeRange" min="1" max="360" value="0" oninput="this.form.timeInput.value=this.value" />
-          <input type="number" name="timeInput" min="1" max="360" value="0" oninput="this.form.timeRange.value=this.value" />
-        </label>
-        <button type="button" id="randomize-cycles">Randomize Point Cycles</button><br />
+          <input type="range" name="timeRange" min="1" max="360" value="60" oninput="this.form.timeInput.value=this.value" />
+          <input type="number" name="timeInput" min="1" max="360" value="60" oninput="this.form.timeRange.value=this.value" />
+          <button type="button" id="randomize-cycles">Randomize Point Cycle Starts</button>
+        </label><br />
+        <label><strong>Point Size:</strong>
+          <input type="range" name="pointSizeRange" min="0" max="50" value="0" oninput="this.form.pointSizeInput.value=this.value" />
+          <input type="number" name="pointSizeInput" min="0" max="50" value="0" oninput="this.form.pointSizeRange.value=this.value" />
+        </label><br />
+        <label><strong>Line Size:</strong>
+          <input type="range" name="lineSizeRange" min="1" max="50" value="1" oninput="this.form.lineSizeInput.value=this.value" />
+          <input type="number" name="lineSizeInput" min="1" max="50" value="1" oninput="this.form.lineSizeRange.value=this.value" />
+        </label><br />
         <label><strong>Point tweening:</strong>
           <label><input type="radio" name="tweening" value="linear" /> Linear</label>
           <label><input type="radio" name="tweening" value="meandering" checked /> Meandering</label>
@@ -120,9 +128,11 @@
           <label><input type="radio" name="tweening" value="elastic" /> Elastic</label>
           <label><input type="radio" name="tweening" value="back" /> Overshoot</label>
         </label><br />
-        <label><strong>Debugging:</strong>
-          <label><input type="checkbox" name="debug"> Debug</label>
-          <label><input type="checkbox" name="fpsCounter"> FPS Counter</label>
+        <label><strong>Drawing:</strong>
+          <label><input type="checkbox" name="debugToggle"> Debugging</label>
+          <label><input type="checkbox" name="fpsCounterToggle"> FPS Counter</label>
+          <label><input type="checkbox" name="nodesToggle" checked> Points</label>
+          <label><input type="checkbox" name="linesToggle" checked> Lines</label>
         <label>
 			</form>
     </div>

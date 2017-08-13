@@ -102,8 +102,10 @@ var zRange = 50;  // maximum value for the range of possible z coords for a poin
 var nodeImg = 'img/node.png';  // image file location for representing every point
 var nodeImgRes = 100;  // resolution of nodeImg file in pixels (aspect ratio should be square)
 var minNodeDiameter = 3;  // minimum pixel size of point on canvas when z coord is 0, maximum is this value plus zRange
+var nodeSize = 0;  // with z coord ignored, this value is used for scaling the drawing for each node
 var drawNodes = true;  // whether to display circles at each point's current position
 var drawLines = true;  // whether to display lines connecting points if they are in connection distance
+var lineSize = 1;  // thickness in pixels of drawn lines between points
 
 /* TWEENING FUNCTIONS */
 
@@ -281,7 +283,7 @@ function toggleControls () {
 }
 
 function toggleFPS () {
-    var fpsCheckbox = document.getElementsByName('fpsCounter')[0];
+    var fpsCheckbox = document.getElementsByName('fpsCounterToggle')[0];
     if (fpsEnabled) {
         stage.removeChild(fpsGraphic);
         fpsEnabled = false;
@@ -294,8 +296,8 @@ function toggleFPS () {
 }
 
 function toggleDebug () {
-    var fpsCheckbox = document.getElementsByName('fpsCounter')[0];
-    var debugCheckbox = document.getElementsByName('debug')[0];
+    var fpsCheckbox = document.getElementsByName('fpsCounterToggle')[0];
+    var debugCheckbox = document.getElementsByName('debugToggle')[0];
     if (debug) {
         if (fpsEnabled) {
             stage.removeChild(fpsGraphic);
@@ -312,6 +314,28 @@ function toggleDebug () {
     }
     fpsCheckbox.checked = fpsEnabled;
     debugCheckbox.checked = debug;
+}
+
+function toggleNodes () {
+    nodesCheckbox = document.getElementsByName('nodesToggle')[0];
+    if (drawNodes) {
+        for (i = 0; i < sprites.length; i++) {
+            sprites[i].visible = false;
+        }
+        drawNodes = false;
+    } else {
+        for (i = 0; i < sprites.length; i++) {
+            sprites[i].visible = true;
+        }
+        drawNodes = true;
+    }
+    nodesCheckbox.checked = drawNodes;
+}
+
+function toggleLines () {
+    linesCheckbox = document.getElementsByName('linesToggle')[0];
+    drawLines = !drawLines;
+    linesCheckbox.checked = drawLines;
 }
 
 function randomInt (min, max) {
@@ -600,7 +624,7 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
                 avgColor = averageColor(points.tweened[i][4], points.tweened[j][4]);
                 shadedColor = shadeColor(avgColor, connectivity);
                 if (drawLines) {
-                    polygon.lineStyle(1, rgbToHex(shadedColor), 1);
+                    polygon.lineStyle(lineSize, rgbToHex(shadedColor), 1);
                     polygon.moveTo(points.tweened[i][0], points.tweened[i][1]);
                     polygon.lineTo(points.tweened[j][0], points.tweened[j][1]);
                 }
@@ -614,7 +638,7 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
 
         if (drawNodes) {
             // draw nodes
-            nodeDiameter = (points.tweened[i][2] + minNodeDiameter);
+            nodeDiameter = (nodeSize + minNodeDiameter);
             scale = nodeDiameter / nodeImgRes;
             sprites[i].scale.x = scale;
             sprites[i].scale.y = scale;
@@ -672,6 +696,12 @@ function loop () {
             clickPullRate = clickPullRateStart;
             clickInertia = clickInertiaStart;
             clickTweeningFn = clickTweeningFnStart;
+
+            // clear affected status for all points
+            var i;
+            for (i = 0; i < polygonPoints.target.length; i++) {
+                polygonPoints.target[i][6] = false;
+            }
         }
     } else if (hover !== null) {
         if (lastHover !== null) {
@@ -788,10 +818,15 @@ window.PIXI.loader
     .load(loopStart);
 
 window.onload = function () {
-    var tweeningInputs, debug, fpsCheckbox;
+    var canvas, tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
+    canvas = document.getElementsByTagName('canvas')[0];
+    canvas.setAttribute('tabindex', 0);
     tweeningInputs = document.getElementsByName('tweening');
-    debugCheckbox = document.getElementsByName('debug')[0];
-    fpsCheckbox = document.getElementsByName('fpsCounter')[0];
+    debugCheckbox = document.getElementsByName('debugToggle')[0];
+    fpsCheckbox = document.getElementsByName('fpsCounterToggle')[0];
+    nodesCheckbox = document.getElementsByName('nodesToggle')[0];
+    linesCheckbox = document.getElementsByName('linesToggle')[0];
+
     /* MOUSE AND TOUCH EVENTS */
 
     window.addEventListener('mousewheel', function (e) {
@@ -801,6 +836,7 @@ window.onload = function () {
 
     window.addEventListener('touchstart', function (e) {
         if (e.target.tagName !== 'CANVAS') return;
+        e.target.focus();
         click = getMousePos(e.changedTouches[0], resolution);
         clickEnd = false;
     });
@@ -824,6 +860,7 @@ window.onload = function () {
 
     window.addEventListener('mousedown', function (e) {
         if (e.target.tagName !== 'CANVAS') return;
+        e.target.focus();
         click = getMousePos(e, resolution);
         clickEnd = false;
     });
@@ -894,19 +931,9 @@ window.onload = function () {
         } else if (e.keyCode === 68) { // d
             toggleDebug();
         } else if (e.keyCode === 78) { // n
-            if (drawNodes) {
-                for (i = 0; i < sprites.length; i++) {
-                    sprites[i].visible = false;
-                }
-                drawNodes = false;
-            } else {
-                for (i = 0; i < sprites.length; i++) {
-                    sprites[i].visible = true;
-                }
-                drawNodes = true;
-            }
+            toggleNodes();
         } else if (e.keyCode === 76) { // l
-            drawLines = !drawLines;
+            toggleLines();
         } else if (e.keyCode === 191) { // ?
             toggleHelp();
         }
@@ -952,11 +979,46 @@ window.onload = function () {
         });
     }
 
+    var pointSizeRange, pointSizeInput;
+    pointSizeRange = document.getElementsByName('pointSizeRange')[0];
+    pointSizeRange.value = nodeSize;
+    pointSizeRange.addEventListener('input', function (e) {
+        nodeSize = parseInt(this.value, 10);
+    });
+
+    pointSizeInput = document.getElementsByName('pointSizeInput')[0];
+    pointSizeInput.value = nodeSize;
+    pointSizeInput.addEventListener('input', function (e) {
+        nodeSize = parseInt(this.value, 10);
+    });
+
+    var lineSizeRange, lineSizeInput;
+    lineSizeRange = document.getElementsByName('lineSizeRange')[0];
+    lineSizeRange.value = lineSize;
+    lineSizeRange.addEventListener('input', function (e) {
+        lineSize = parseInt(this.value, 10);
+    });
+
+    lineSizeRange = document.getElementsByName('lineSizeRange')[0];
+    lineSizeRange.value = lineSize;
+    lineSizeRange.addEventListener('input', function (e) {
+        lineSize = parseInt(this.value, 10);
+    });
+
+
     debugCheckbox.addEventListener('change', function (e) {
         toggleDebug();
     });
 
     fpsCheckbox.addEventListener('change', function (e) {
         toggleFPS();
+    });
+
+    nodesCheckbox.addEventListener('change', function (e) {
+        toggleNodes();
+    });
+
+    linesCheckbox.addEventListener('change', function (e) {
+        toggleLines();
     });
 };
