@@ -461,11 +461,7 @@ function createSprite () {
     );
 }
 
-/* POINT OPERATION FUNCTIONS */
-
-function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
-    var i, x, y, z, color, cycleStart, easingFn, sprite;
-    var points = [];
+function clearSprites () {
     if (sprites.length > 0) {
         // need to clear out old sprites
         for (i = 0; i < sprites.length; i++) {
@@ -473,6 +469,13 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
         }
         sprites = [];
     }
+}
+
+/* POINT OPERATION FUNCTIONS */
+
+function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
+    var i, x, y, z, color, cycleStart, easingFn, sprite;
+    var points = [];
     for (i = 0; i < numPoints; i++) {
         x = randomInt(0, maxX - 1);
         y = randomInt(0, maxY - 1);
@@ -487,6 +490,26 @@ function getRandomPoints (numPoints, maxX, maxY, maxZ, tweeningFns) {
         sprites.push(sprite);
         stage.addChild(sprite);
         points[i] = [x, y, z, cycleStart, color, easingFn];
+    }
+    return points;
+}
+
+function addOrRemovePoints (numPoints, points) {
+    /* Given new value numPoints, remove or add new random points to match new count. */
+    var deletedSprites, newPoints;
+    if (points.target.length > numPoints) {
+        points.original.splice(numPoints - 1);
+        points.target.splice(numPoints - 1);
+        points.tweened.splice(numPoints - 1);
+        deletedSprites = sprites.splice(numPoints - 1);
+        for (var i = 0; i < deletedSprites.length; i++) {
+            stage.removeChild(deletedSprites[i]);
+        }
+    } else if (points.target.length < numPoints) {
+        newPoints = getRandomPoints(numPoints - points.target.length, screenWidth, screenHeight, zRange, tweeningFns);
+        points.original = points.original.concat(newPoints);
+        points.target = points.target.concat(JSON.parse(JSON.stringify(newPoints)));
+        points.tweened = points.tweened.concat(JSON.parse(JSON.stringify(newPoints)));
     }
     return points;
 }
@@ -687,6 +710,7 @@ function loop () {
 
     if (reset === true) {
         var newPoints;
+        clearSprites();
         newPoints = getRandomPoints(numPoints, screenWidth, screenHeight, zRange, tweeningFns);
         polygonPoints = {
             original: newPoints,
@@ -1028,12 +1052,14 @@ window.onload = function () {
     pointsNumRange.value = numPoints;
     pointsNumRange.addEventListener('input', function (e) {
         numPoints = parseInt(this.value, 10);
+        polygonPoints = addOrRemovePoints(numPoints, polygonPoints);
     });
 
     var pointsNumInput = document.getElementsByName('pointsNumInput')[0];
     pointsNumInput.value = numPoints;
     pointsNumInput.addEventListener('input', function (e) {
         numPoints = parseInt(this.value, 10);
+        polygonPoints = addOrRemovePoints(numPoints, polygonPoints);
     });
 
     var maxTravelRange = document.getElementsByName('maxTravelRange')[0];
