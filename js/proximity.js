@@ -817,7 +817,7 @@ window.onload = function () {
 
     window.addEventListener('keydown', function (e) {
         var i;
-        if (e.target.tagName !== 'CANVAS' || e.target.tagName !== 'BODY') return;
+        if (e.target.tagName === 'INPUT') return;
         if (e.keyCode === 37) { // left
             pointShiftBiasX = -1;
         } else if (e.keyCode === 38) { // up
@@ -889,7 +889,7 @@ window.onload = function () {
         }
     });
 
-    /* BUTTON EVENTS */
+    /* BUTTON & INPUT EVENTS */
 
     document.getElementById('toggle-help').addEventListener('click', function () {
         toggleHelp();
@@ -912,6 +912,7 @@ window.onload = function () {
     timeInput.value = cycleDuration;
     timeInput.addEventListener('input', function (e) {
         var oldCycleDuration = cycleDuration;
+        if (this.value === '' || this.value === '0') return;
         cycleDuration = parseInt(this.value, 10);
         polygonPoints = redistributeCycles(polygonPoints, oldCycleDuration, cycleDuration);
     });
