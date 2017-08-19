@@ -702,8 +702,8 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
 /* MAIN LOOP */
 
 function loop () {
-    screenWidth = document.body.clientWidth;
-    screenHeight = document.body.clientHeight;
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
     renderer.resize(screenWidth, screenHeight);
 
     polygon.clear();
@@ -819,8 +819,8 @@ function loop () {
 }
 
 function loopStart () {
-    screenWidth = document.body.clientWidth;
-    screenHeight = document.body.clientHeight;
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
     // Create the renderer
     renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: resolution});
 

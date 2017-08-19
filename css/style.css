@@ -7,6 +7,18 @@ html {
   background-color: #1e1e1e;
 }
 
+html, body, canvas {
+  overflow: none;
+}
+
+canvas {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  top: 0 !important;
+}
+
 html, button {
   font-family: "Arial", sans-serif;
   font-size: 10pt;
