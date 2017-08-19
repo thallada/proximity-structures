@@ -75,7 +75,7 @@ var tweeningSets = { // numbers refer to indicies into the allTweeningsFns array
     elastic: [19, 20, 21],
     back: [24]
 };
-var tweeningFns = tweeningSets.meandering; // the actual set of tweening functions points will randomly choose from
+var tweeningFns = tweeningSets.back; // the actual set of tweening functions points will randomly choose from
 // click effect related config vars
 var clickPullRateStart = 0.01; // initial value for the ratio of a point's distance from the click position to travel in one cycle
 var clickPullRateInc = 0.005; // amount to increase clickPullRate every tick that a click is held
