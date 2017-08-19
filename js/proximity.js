@@ -875,7 +875,7 @@ window.PIXI.loader
     .add(nodeImg)
     .load(loopStart);
 
-window.onload = function () {
+window.addEventListener('load', function () {
     var canvas, tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
     canvas = document.getElementsByTagName('canvas')[0];
     canvas.setAttribute('tabindex', 0);
@@ -1150,4 +1150,4 @@ window.onload = function () {
     linesCheckbox.addEventListener('change', function (e) {
         toggleLines();
     });
-};
+}, false);
