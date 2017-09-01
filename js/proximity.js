@@ -75,7 +75,7 @@ var tweeningSets = { // numbers refer to indicies into the allTweeningsFns array
     elastic: [19, 20, 21],
     back: [24]
 };
-var tweeningFns = tweeningSets.meandering; // the actual set of tweening functions points will randomly choose from
+var tweeningFns = tweeningSets.back; // the actual set of tweening functions points will randomly choose from
 // click effect related config vars
 var clickPullRateStart = 0.01; // initial value for the ratio of a point's distance from the click position to travel in one cycle
 var clickPullRateInc = 0.005; // amount to increase clickPullRate every tick that a click is held
@@ -702,8 +702,8 @@ function drawPolygon (polygon, points, counter, tweeningFns) {
 /* MAIN LOOP */
 
 function loop () {
-    screenWidth = document.body.clientWidth;
-    screenHeight = document.body.clientHeight;
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
     renderer.resize(screenWidth, screenHeight);
 
     polygon.clear();
@@ -819,8 +819,8 @@ function loop () {
 }
 
 function loopStart () {
-    screenWidth = document.body.clientWidth;
-    screenHeight = document.body.clientHeight;
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
     // Create the renderer
     renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: resolution});
 
@@ -875,7 +875,7 @@ window.PIXI.loader
     .add(nodeImg)
     .load(loopStart);
 
-window.onload = function () {
+window.addEventListener('load', function () {
     var canvas, tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
     canvas = document.getElementsByTagName('canvas')[0];
     canvas.setAttribute('tabindex', 0);
@@ -1150,4 +1150,4 @@ window.onload = function () {
     linesCheckbox.addEventListener('change', function (e) {
         toggleLines();
     });
-};
+}, false);
