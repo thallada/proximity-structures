@@ -876,9 +876,7 @@ window.PIXI.loader
     .load(loopStart);
 
 window.addEventListener('load', function () {
-    var canvas, tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
-    canvas = document.getElementsByTagName('canvas')[0];
-    canvas.setAttribute('tabindex', 0);
+    var tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
     tweeningInputs = document.getElementsByName('tweening');
     debugCheckbox = document.getElementsByName('debugToggle')[0];
     fpsCheckbox = document.getElementsByName('fpsCounterToggle')[0];
