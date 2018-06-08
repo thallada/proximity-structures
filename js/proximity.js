@@ -818,64 +818,7 @@ function loop () {
     window.requestAnimationFrame(loop);
 }
 
-function loopStart () {
-    screenWidth = window.innerWidth;
-    screenHeight = window.innerHeight;
-    // Create the renderer
-    renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: resolution});
-
-    // Add the canvas to the HTML document
-    document.body.appendChild(renderer.view);
-
-    // Create a container object called the `stage`
-    stage = new window.PIXI.Container();
-
-    renderer.view.style.position = 'absolute';
-    renderer.view.style.display = 'block';
-    renderer.autoResize = true;
-
-    counter = 0;
-    totalScreenPixels = screenWidth + screenHeight;
-    connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
-    pointShiftDistance = Math.round(totalScreenPixels / 45);
-    clickMaxDistStart = Math.min(Math.round(totalScreenPixels / 20), clickMaxDistStart);
-    hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistStart);
-    polygon = new window.PIXI.Graphics();
-    stage.addChild(polygon);
-    numPoints = Math.round(totalScreenPixels / 6);
-    startPoints = getRandomPoints(numPoints, screenWidth, screenHeight, zRange, tweeningFns);
-    polygonPoints = {
-        original: startPoints,
-        target: JSON.parse(JSON.stringify(startPoints)),
-        tweened: JSON.parse(JSON.stringify(startPoints))
-    };
-
-    fpsGraphic = new window.PIXI.Text('0', {font: '25px monospace', fill: 'yellow'});
-    fpsGraphic.anchor = new window.PIXI.Point(1, 0);
-    fpsGraphic.x = screenWidth - 1;
-    fpsGraphic.y = 0;
-
-    if (fpsEnabled) {
-        stage.addChild(fpsGraphic);
-    }
-
-    lastLoop = new Date();
-
-    scrollDelta = 0;
-
-    // Try to fix bug where click initializes to a bogus value
-    click = null;
-    hover = null;
-
-    window.requestAnimationFrame(loop);
-}
-
-// Use PIXI loader to load image and then start animation
-window.PIXI.loader
-    .add(nodeImg)
-    .load(loopStart);
-
-window.addEventListener('load', function () {
+function registerEventHandlers() {
     var tweeningInputs, debugCheckbox, fpsCheckbox, nodeCheckbox, linesCheckbox;
     tweeningInputs = document.getElementsByName('tweening');
     debugCheckbox = document.getElementsByName('debugToggle')[0];
@@ -1148,4 +1091,63 @@ window.addEventListener('load', function () {
     linesCheckbox.addEventListener('change', function (e) {
         toggleLines();
     });
-}, false);
+}
+
+function loopStart () {
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight;
+    // Create the renderer
+    renderer = window.PIXI.autoDetectRenderer(screenWidth, screenHeight, {antialias: true, resolution: resolution});
+
+    // Add the canvas to the HTML document
+    document.body.appendChild(renderer.view);
+
+    // Create a container object called the `stage`
+    stage = new window.PIXI.Container();
+
+    renderer.view.style.position = 'absolute';
+    renderer.view.style.display = 'block';
+    renderer.autoResize = true;
+
+    counter = 0;
+    totalScreenPixels = screenWidth + screenHeight;
+    connectionDistance = Math.min(Math.round(totalScreenPixels / 16), 75);
+    pointShiftDistance = Math.round(totalScreenPixels / 45);
+    clickMaxDistStart = Math.min(Math.round(totalScreenPixels / 20), clickMaxDistStart);
+    hoverMaxDistStart = Math.min(Math.round(totalScreenPixels / 16), hoverMaxDistStart);
+    polygon = new window.PIXI.Graphics();
+    stage.addChild(polygon);
+    numPoints = Math.round(totalScreenPixels / 6);
+    startPoints = getRandomPoints(numPoints, screenWidth, screenHeight, zRange, tweeningFns);
+    polygonPoints = {
+        original: startPoints,
+        target: JSON.parse(JSON.stringify(startPoints)),
+        tweened: JSON.parse(JSON.stringify(startPoints))
+    };
+
+    fpsGraphic = new window.PIXI.Text('0', {font: '25px monospace', fill: 'yellow'});
+    fpsGraphic.anchor = new window.PIXI.Point(1, 0);
+    fpsGraphic.x = screenWidth - 1;
+    fpsGraphic.y = 0;
+
+    if (fpsEnabled) {
+        stage.addChild(fpsGraphic);
+    }
+
+    lastLoop = new Date();
+
+    scrollDelta = 0;
+
+    // Try to fix bug where click initializes to a bogus value
+    click = null;
+    hover = null;
+
+    registerEventHandlers();
+
+    window.requestAnimationFrame(loop);
+}
+
+// Use PIXI loader to load image and then start animation
+window.PIXI.loader
+    .add(nodeImg)
+    .load(loopStart);
