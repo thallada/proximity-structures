@@ -828,9 +828,9 @@ function registerEventHandlers() {
 
     /* MOUSE AND TOUCH EVENTS */
 
-    window.addEventListener('mousewheel', function (e) {
+    window.addEventListener('wheel', function (e) {
         if (e.target.tagName !== 'CANVAS') return;
-        scrollDelta = scrollDelta + ((e.deltaY / 100) * 3);
+        scrollDelta = scrollDelta + e.deltaY;
     });
 
     window.addEventListener('touchstart', function (e) {
